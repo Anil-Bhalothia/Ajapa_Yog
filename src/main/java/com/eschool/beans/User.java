@@ -17,7 +17,6 @@ public class User {
 	private String dob;
 	private String countryCode;
 	private String mobileNumber;
-	@Column(unique = true)
 	private String email;
 	private String password;
 	private String country;

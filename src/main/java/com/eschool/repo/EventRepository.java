@@ -8,10 +8,11 @@ import org.springframework.data.repository.CrudRepository;
 import com.eschool.beans.Event;
 
 public interface EventRepository extends CrudRepository<Event, Integer> {
-
 	@Query("select max(e.eventId) from Event e")
-    Integer findMaxEventIdValue();
-	
+    Integer findMaxEventIdValue();	
 	List<Event> findByEventNameStartingWithAndEventStatusAndBookingStatusOrderByEventDateDesc(String eventName, boolean eventStatus,boolean bookingStatus);
 	Event findByEventId(int eventId);
+	List<Event> findByEventStatusOrderByEventDateDesc(boolean eventStatus);
+	
+	
 }

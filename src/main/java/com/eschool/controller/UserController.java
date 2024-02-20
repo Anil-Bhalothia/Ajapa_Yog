@@ -8,6 +8,9 @@ import org.springframework.http.HttpHeaders;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
@@ -16,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.apache.xmlbeans.impl.common.SystemCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -53,8 +57,7 @@ public class UserController {
 	@Autowired
 	EmailService emailService;
 	@Autowired
-	OneTimePasswordRepository oRepo;
-	
+	OneTimePasswordRepository oRepo;	
 	@PostMapping("verifyMobileNumberEmailUsingOTP")
     public ResponseEntity<Object> verifyOTP(@RequestParam("otp") String otp, @RequestParam("email") String email) {
 		String message="";
@@ -186,8 +189,7 @@ public class UserController {
 					.setIssuedAt(new Date())
 					.setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1 day
 					.signWith(SignatureAlgorithm.HS256,"9wJYK7g67fTRC29iP6VnF89h5sW1rDcT3uXvA0qLmB4zE1pN8rS7zT0qF2eR5vJ3")
-					.compact();
-       				
+					.compact();       				
 			message="success";
        	}
        	else
@@ -195,7 +197,8 @@ public class UserController {
        		errorMessage="Invalid OTP";
        		errorCode=400;
        	}
-       	if (user != null && message.equals("success")) {
+       	if (user != null && message.equals("success")) 
+       	{
 			if(user.getStatus().equals("Pending")) {
 				errorMessage="Unapproved User";
 				message="";
@@ -204,6 +207,12 @@ public class UserController {
 			}
 			else if(user.getStatus().equals("Deleted")) {
 				errorMessage="Deleted User";
+				message="";
+				errorCode=400;
+				token="";
+			}	
+			else if(user.getStatus().equals("Rejected")) {
+				errorMessage="Rejected User";
 				message="";
 				errorCode=400;
 				token="";
@@ -219,8 +228,7 @@ public class UserController {
     	{
     		errorCode=500;
     		errorMessage=e.getMessage();
-    	}   
-    	
+    	}       	
     	data.put("token",token);
     	data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -375,17 +383,46 @@ public class UserController {
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
-		System.out.println(user.getStatus());
+		int age=0;
+		try {
+        	 // Parse the birthdate string to a LocalDate object
+            LocalDate birthdate = LocalDate.parse(user.getDob());
+
+            // Get the current date
+            LocalDate currentDate = LocalDate.now();
+
+            // Calculate the period between the birthdate and current date
+            Period period = Period.between(birthdate, currentDate);
+
+            // Extract years, months, and days from the period
+            int years = period.getYears();
+            int months = period.getMonths();
+            int days = period.getDays();
+            age=years;
+        }
+        catch(Exception e)
+        {
+        	errorCode=500;        	
+        	errorMessage=e.getMessage();
+        }
 		Map<String, Object> data = new HashMap<>();		
 		try {			
-			if(uRepo.findByEmail(user.getEmail())!=null) {
+			if(age>=15 && uRepo.findByEmail(user.getEmail())!=null ) {
 				errorMessage="Email Already Exists";
 				errorCode=400;
 			}
-			else if(uRepo.findByMobileNumber(user.getMobileNumber())!=null) {
+			else if(age>=15 && uRepo.findByCountryCodeAndMobileNumber(user.getCountryCode(),user.getMobileNumber())!=null) {
 				errorMessage="Mobile Number Already Exists";
 				errorCode=400;
-			}			
+			}
+			else if(age<15 && user.getEmail().length()!=0 && uRepo.findByEmail(user.getEmail())!=null ) {
+				errorMessage="Email Already Exists";
+				errorCode=400;
+			}
+			else if(age<15 && user.getMobileNumber().length()!=0 && uRepo.findByCountryCodeAndMobileNumber(user.getCountryCode(),user.getMobileNumber())!=null) {
+				errorMessage="Mobile Number Already Exists";
+				errorCode=400;
+			}
 			else {
 			if(user.getRole()==null)
 			user.setRole("User");
@@ -396,12 +433,15 @@ public class UserController {
 			String fname=System.currentTimeMillis()+".jpg";
 			user.setProfileImage(fname);
 			uRepo.save(user);
+			if(age>=15)
+			{
 			User savedUser=null;
 			savedUser= uRepo.findByEmail(user.getEmail());
 			if(user.getFamilyId()==0)
 			{
 			savedUser.setFamilyId(savedUser.getId());			
 			uRepo.save(savedUser);
+			}
 			}
 			if(file!=null)
 			{
@@ -437,6 +477,7 @@ public class UserController {
 		int errorCode=0;
 		int sid=0;
 		String email=null,role=null;
+		int familyId=0;
 		Map<String, Object> data = new HashMap<>();
 		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
 			String jwtToken = authorizationHeader.substring(7); // Removing "Bearer " prefix
@@ -449,25 +490,60 @@ public class UserController {
 				email = map.get("email").toString();
 				role=map.get("role").toString();
 				sid=Integer.valueOf(map.get("id").toString());				
+				familyId=Integer.valueOf(map.get("familyId").toString());
 				errorCode=0;
-				if(role.equals("Member")||role.equals("User")||role.equals("Super")||role.equals("Admin"))
-				{
-					
-				}
-				else
-				{
-					errorCode=400;
-					errorMessage="Invalid Token Values";
-					System.out.println("Hello3");
-				}
-				} 
+			} 
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
-				System.out.println("Hello4");
 			}
 		}
-		if(errorCode==0 && (role.equals("Super")||role.equals("Admin")||sid==user.getId() || sid==user.getFamilyId() || role.equals("User")))
+		
+		int age=0;
+		try {
+       	 // Parse the birthdate string to a LocalDate object
+           LocalDate birthdate = LocalDate.parse(user.getDob());
+
+           // Get the current date
+           LocalDate currentDate = LocalDate.now();
+
+           // Calculate the period between the birthdate and current date
+           Period period = Period.between(birthdate, currentDate);
+
+           // Extract years, months, and days from the period
+           int years = period.getYears();
+           int months = period.getMonths();
+           int days = period.getDays();
+           age=years;
+       }
+       catch(Exception e)
+       {
+       	errorCode=500;        	
+       	errorMessage=e.getMessage();
+       }
+		User existingUserByEmail=uRepo.findByEmail(user.getEmail());
+		User existingUserByMobileNumber=uRepo.findByCountryCodeAndMobileNumber(user.getCountryCode(),user.getMobileNumber());
+				
+		if(age>=15 && (existingUserByEmail!=null && existingUserByEmail.getId()!=user.getId())) {
+			errorMessage="Email Already Exists";
+			errorCode=400;
+		}
+		else if(age>=15 && (existingUserByMobileNumber!=null && existingUserByMobileNumber.getId()!=user.getId())) {
+			errorMessage="Mobile Number Already Exists";
+			errorCode=400;
+		}
+		if(age<15 && user.getEmail().length()!=0 && (existingUserByEmail!=null && existingUserByEmail.getId()!=user.getId())) {
+			errorMessage="Email Already Exists";
+			errorCode=400;
+		}
+		else if(age<15 && user.getMobileNumber().length()!=0 && (existingUserByMobileNumber!=null && existingUserByMobileNumber.getId()!=user.getId())) {
+			errorMessage="Mobile Number Already Exists";
+			errorCode=400;
+		}
+		
+		
+		if(errorCode==0 && (role.equals("Super")||role.equals("Admin")||sid==user.getId()||(familyId==user.getFamilyId() && role.equals("User"))))
+		{
 		try {	
 			String fname=System.currentTimeMillis()+".jpg";
 		    user.setProfileImage(fname);			
@@ -488,7 +564,9 @@ public class UserController {
 		} catch (Exception e) {			
 			errorMessage = e.getMessage();
 			errorCode=500;
-		}		
+		}
+		}
+		
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
 		data.put("errorCode",errorCode);		
@@ -505,6 +583,7 @@ public class UserController {
 		int errorCode=0;
 		int sid=0;
 		String email=null,role=null;
+		int familyId=0;
 		Map<String, Object> data = new HashMap<>();
 		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
 			String jwtToken = authorizationHeader.substring(7); // Removing "Bearer " prefix
@@ -517,31 +596,76 @@ public class UserController {
 				email = map.get("email").toString();
 				role=map.get("role").toString();
 				sid=Integer.valueOf(map.get("id").toString());				
+				familyId=Integer.valueOf(map.get("familyId").toString());
 				errorCode=0;
-				if(role.equals("Member")||role.equals("User")||role.equals("Super")||role.equals("Admin"))
-				{
-					
-				}
-				else
-				{
-					errorCode=400;
-					errorMessage="Invalid Token Values";
-				}
-				} 
+			} 
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
-				System.out.println("Hello4");
 			}
 		}
-		if(errorCode==0 && (role.equals("Super")||role.equals("Admin")||role.equals("User")||sid==user.getId() || sid==user.getFamilyId()))
-		try {			
+		
+		int age=0;
+		try {
+       	 // Parse the birthdate string to a LocalDate object
+           LocalDate birthdate = LocalDate.parse(user.getDob());
+
+           // Get the current date
+           LocalDate currentDate = LocalDate.now();
+
+           // Calculate the period between the birthdate and current date
+           Period period = Period.between(birthdate, currentDate);
+
+           // Extract years, months, and days from the period
+           int years = period.getYears();
+           int months = period.getMonths();
+           int days = period.getDays();
+           age=years;
+       }
+       catch(Exception e)
+       {
+       	errorCode=500;        	
+       	errorMessage=e.getMessage();
+       }
+		User existingUserByEmail=null;
+		User existingUserByMobileNumber=null;
+		try
+		{
+		existingUserByEmail=uRepo.findByEmail(user.getEmail());	
+		existingUserByMobileNumber=uRepo.findByCountryCodeAndMobileNumber(user.getCountryCode(),user.getMobileNumber());
+		}
+		catch(Exception ex)
+		{
+			
+		}
+		if(age>=15 && (existingUserByEmail!=null && existingUserByEmail.getId()!=user.getId())) {
+			errorMessage="Email Already Exists";
+			errorCode=400;
+		}
+		else if(age>=15 && (existingUserByMobileNumber!=null && existingUserByMobileNumber.getId()!=user.getId())) {
+			errorMessage="Mobile Number Already Exists";
+			errorCode=400;
+		}
+		if(age<15 && user.getEmail().length()!=0 && (existingUserByEmail!=null && existingUserByEmail.getId()!=user.getId())) {
+			errorMessage="Email Already Exists";
+			errorCode=400;
+		}
+		else if(age<15 && user.getMobileNumber().length()!=0 && (existingUserByMobileNumber!=null && existingUserByMobileNumber.getId()!=user.getId())) {
+			errorMessage="Mobile Number Already Exists";
+			errorCode=400;
+		}	
+		
+		if(errorCode==0 && (role.equals("Super")||role.equals("Admin")||sid==user.getId()||(familyId==user.getFamilyId() && role.equals("User"))))
+		{
+			try {			
 			uRepo.save(user);			
 			message = "Data updated successfully";
 		} catch (Exception e) {			
 			errorMessage = e.getMessage();
 			errorCode=500;
-		}		
+		}
+		}
+		
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
 		data.put("errorCode",errorCode);		
@@ -635,6 +759,12 @@ public class UserController {
 				errorCode=400;
 				token="";
 			}	
+			else if(user.getStatus().equals("Rejected")) {
+				errorMessage="Rejected User";
+				message="";
+				errorCode=400;
+				token="";
+			}	
 			else
 			{
 				user.setPassword("");
@@ -693,6 +823,12 @@ public class UserController {
 			else if(user.getStatus().equals("Deleted")) {
 				errorCode=400;
 				errorMessage="Deleted User";
+			}
+			else if(user.getStatus().equals("Rejected")) {
+				errorMessage="Rejected User";
+				message="";
+				errorCode=400;
+				token="";
 			}	
 			else
 			{
@@ -741,7 +877,8 @@ public class UserController {
 		String errorMessage="";
 		int errorCode=0;
 		String email = "";
-		String id="";
+		String role="";
+		int id=0;
 		Map<String, Object> data = new HashMap<>();		
 		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
 			String jwtToken = authorizationHeader.substring(7); // Removing "Bearer " prefix
@@ -750,10 +887,10 @@ public class UserController {
 				String chunks[] = jwtToken.split("\\.");
 				String payload = new String(decoder.decode(chunks[1]));
 				ObjectMapper mapper = new ObjectMapper();
-				Map<String, String> map = mapper.readValue(payload, Map.class);
-				email = map.get("email");
-				id=map.get("id");
-				errorCode=0;
+				Map<String, Object> map = mapper.readValue(payload, Map.class);
+				email = map.get("email").toString();
+				role=map.get("role").toString();
+				id=Integer.valueOf(map.get("id").toString());
 				} 
 			catch (Exception e) {
 				errorCode=500;
@@ -762,7 +899,7 @@ public class UserController {
 		}
 		try
 		{
-		User user = uRepo.findByEmail(email);
+		User user = uRepo.findById(id);
 		if(user!=null && errorCode==0)
 		{		
 			user.setPassword(password);
@@ -797,6 +934,7 @@ public class UserController {
 		String email = "";
 		String role="";
 		int sid=0;
+		int familyId=0;
 		Map<String, Object> data = new HashMap<>();		
 		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
 			String jwtToken = authorizationHeader.substring(7); // Removing "Bearer " prefix
@@ -808,23 +946,20 @@ public class UserController {
 				Map<String, Object> map = mapper.readValue(payload, Map.class);
 				email = map.get("email").toString();
 				role=map.get("role").toString();	
-				System.out.println("Before");
 				sid=Integer.valueOf(map.get("id").toString());
-				System.out.println("After");
+				familyId=Integer.valueOf(map.get("familyId").toString());
 				errorCode=0;
 				} 
 			catch (Exception e) {
 				errorCode=500;
-				System.out.println(e.getMessage());
 				errorMessage=e.getMessage();				
 			}
 		}
 		try
 		{
 		User user = uRepo.findById(Integer.parseInt(id));
-		System.out.println(role);
-		if(user!=null && errorCode==0 && (role.equals("Super") || role.equals("Admin") || role.equals("User")))
-		{		
+		if(user!=null && errorCode==0 && (role.equals("Super") || role.equals("Admin") || (role.equals("User") && familyId==user.getFamilyId())))
+		{	
 			user.setStatus(status);
 			uRepo.save(user);		
 			message="User is "+user.getStatus();
@@ -857,6 +992,7 @@ public class UserController {
 		String email = "";
 		String role="";
 		int sid=0;
+		int familyId=0;
 		Map<String, Object> data = new HashMap<>();		
 		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
 			String jwtToken = authorizationHeader.substring(7); // Removing "Bearer " prefix
@@ -869,6 +1005,7 @@ public class UserController {
 				email = map.get("email").toString();
 				role=map.get("role").toString();	
 				sid=Integer.valueOf(map.get("id").toString());			
+				familyId=Integer.valueOf(map.get("familyId").toString());
 				errorCode=0;
 				} 
 			catch (Exception e) {
@@ -881,7 +1018,7 @@ public class UserController {
 			User newHead = uRepo.findById(Integer.parseInt(id));
 			User oldHead = uRepo.findById(sid);
 			
-		if(oldHead!=null && errorCode==0 && role.equals("User"))
+		if(oldHead!=null && errorCode==0 && (role.equals("User")&& familyId==newHead.getFamilyId()))
 		{		
 			newHead.setRole("User");
 			oldHead.setRole("Member");
@@ -932,19 +1069,16 @@ public class UserController {
 				role = map.get("role");	
 				if(role.equals("User")||role.equals("Super")||role.equals("Admin"))
 				{
-					System.out.println("Hello2"+role);
 				}
 				else
 				{
 					errorCode=400;
 					errorMessage="Invalid Token Values";
-					System.out.println("Hello3");
 				}
 				} 
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
-				System.out.println("Hello4");
 			}
 		}
 		
@@ -953,16 +1087,13 @@ public class UserController {
 		try
 		{
 			if(country.equals("All") && state.equals("All") && city.equals("All"))
-				users=uRepo.findByStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(status, searchText, searchText,searchText);
+				users=uRepo.findByStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(status, searchText, searchText,searchText,"Super");
 			else if(state.equals("All") && city.equals("All"))
-				users=uRepo.findByCountryAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,status, searchText, searchText,searchText);
+				users=uRepo.findByCountryAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,status, searchText, searchText,searchText,"Super");
 			else if(city.equals("All"))
-				users=uRepo.findByCountryAndStateAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,state,status, searchText, searchText,searchText);
+				users=uRepo.findByCountryAndStateAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,state,status, searchText, searchText,searchText,"Super");
 			else
-				users=uRepo.findByCountryAndStateAndCityAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,state,city,status, searchText, searchText,searchText);
-			
-			if(users!=null && users.get(0).getRole().equals("Super"))
-			users.remove(0);
+				users=uRepo.findByCountryAndStateAndCityAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,state,city,status, searchText, searchText,searchText,"Super");
 			
 			if (start >= 0 && end < users.size() && start <= end) {
 	    	errorCode=0;
@@ -1006,10 +1137,7 @@ public class UserController {
 			return new ResponseEntity<>(data, HttpStatus.OK);
 		else 
 			return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
-      
 	}
-	
-	
 	@GetMapping("report/user/list")
 	public ResponseEntity<Object> reportGetUsers(@RequestParam String searchText,@RequestParam String status,@RequestParam String country,@RequestParam String state,@RequestParam String city,@RequestHeader("Authorization") String authorizationHeader) {
 		String fileName=context.getRealPath("/")+"/reports/"+System.currentTimeMillis()+".xlsx";
@@ -1032,19 +1160,16 @@ public class UserController {
 				role = map.get("role");	
 				if(role.equals("User")||role.equals("Super")||role.equals("Admin"))
 				{
-					System.out.println("Hello2"+role);
 				}
 				else
 				{
 					errorCode=400;
 					errorMessage="Invalid Token Values";
-					System.out.println("Hello3");
 				}
 				} 
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
-				System.out.println("Hello4");
 			}
 		}
 		
@@ -1053,16 +1178,14 @@ public class UserController {
 		try
 		{
 			if(country.equals("All") && state.equals("All") && city.equals("All"))
-				users=uRepo.findByStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(status, searchText, searchText,searchText);
+				users=uRepo.findByStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(status, searchText, searchText,searchText,"Super");
 			else if(state.equals("All") && city.equals("All"))
-				users=uRepo.findByCountryAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,status, searchText, searchText,searchText);
+				users=uRepo.findByCountryAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,status, searchText, searchText,searchText,"Super");
 			else if(city.equals("All"))
-				users=uRepo.findByCountryAndStateAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,state,status, searchText, searchText,searchText);
+				users=uRepo.findByCountryAndStateAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,state,status, searchText, searchText,searchText,"Super");
 			else
-				users=uRepo.findByCountryAndStateAndCityAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,state,city,status, searchText, searchText,searchText);
+				users=uRepo.findByCountryAndStateAndCityAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,state,city,status, searchText, searchText,searchText,"Super");
 			
-			if(users!=null && users.get(0).getRole().equals("Super"))
-			users.remove(0);
 			
 			ExcelService service=new ExcelService();
 			service.generateExcelFile(users,fileName);
@@ -1075,12 +1198,10 @@ public class UserController {
 		  
 	   }
 	}
-	
-		data.put("message",message);
+		
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
 		data.put("errorCode",errorCode);	
-		
 		if(errorCode==0)
 			return new ResponseEntity<>(data, HttpStatus.OK);
 		else 
@@ -1111,19 +1232,16 @@ public class UserController {
 				role = map.get("role");	
 				if(role.equals("User")||role.equals("Super")||role.equals("Admin"))
 				{
-					System.out.println("Hello2"+role);
 				}
 				else
 				{
 					errorCode=400;
 					errorMessage="Invalid Token Values";
-					System.out.println("Hello3");
 				}
 				} 
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
-				System.out.println("Hello4");
 			}
 		}
 		
@@ -1132,24 +1250,18 @@ public class UserController {
 		try
 		{
 			if(country.equals("All") && state.equals("All") && city.equals("All"))
-				users=uRepo.findByStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(status, searchText, searchText,searchText);
+				users=uRepo.findByStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(status, searchText, searchText,searchText,"Super");
 			else if(state.equals("All") && city.equals("All"))
-				users=uRepo.findByCountryAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,status, searchText, searchText,searchText);
+				users=uRepo.findByCountryAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,status, searchText, searchText,searchText,"Super");
 			else if(city.equals("All"))
-				users=uRepo.findByCountryAndStateAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,state,status, searchText, searchText,searchText);
+				users=uRepo.findByCountryAndStateAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,state,status, searchText, searchText,searchText,"Super");
 			else
-				users=uRepo.findByCountryAndStateAndCityAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,state,city,status, searchText, searchText,searchText);
+				users=uRepo.findByCountryAndStateAndCityAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(country,state,city,status, searchText, searchText,searchText,"Super");
 			
-			if(users!=null && users.get(0).getRole().equals("Super"))
-			users.remove(0);
 			PDFService pdfGeneratorService=new PDFService();
 			pdfBytes = pdfGeneratorService.generatePdfFile(users);
-			
-
-            // Call the method to convert byte array to file
             convertByteArrayToFile(pdfBytes, fileName);
             data.put("fileName",fileName);
-		
 		}
 	   catch(Exception e)
 	   {
@@ -1261,8 +1373,6 @@ public class UserController {
 				} 
 			catch (Exception e) {
 				errorCode=500;
-				System.out.println("Error1");
-				System.out.println(e.getMessage());
 				errorMessage=e.getMessage();				
 			}
 		}
@@ -1271,12 +1381,7 @@ public class UserController {
 		List<User> users = null;
 		if(errorCode==0 && (role.equals("Super") || role.equals("Admin") || role.equals("User")||role.equals("Member")))
 		{		
-			System.out.println("Entered");		
-			System.out.println("FamilyId:"+familyId);		
-			System.out.println("ID:"+sid);		
-			
-			users=uRepo.findAllByFamilyIdAndIdNotAndStatus(familyId,sid,"Approved");
-			System.out.println(users.size());
+			users=uRepo.findAllByFamilyIdAndStatusAndRoleNot(familyId,"Approved","Super");
 			data.put("users", users);
 			message="success";			
 		}
@@ -1289,9 +1394,6 @@ public class UserController {
 		catch(Exception e)
 		{
 			errorCode=500;
-			System.out.println("Error2");
-			System.out.println(e.getMessage());
-			
 			errorMessage=e.getMessage();
 		}		
 		data.put("message",message);
@@ -1303,5 +1405,62 @@ public class UserController {
 			return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);  	
 	}  	
 	
+	@GetMapping("/getAllApprovedUsersByFamilyId")
+	public ResponseEntity<Object> getAllAproovedUsersByFamilyId(@RequestHeader("Authorization") String authorizationHeader) {
+		String message="";
+		String errorMessage="";
+		int errorCode=0;
+		String email = "";
+		String role="";
+		int sid=0;
+		int familyId=0;
+		Map<String, Object> data = new HashMap<>();		
+		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+			String jwtToken = authorizationHeader.substring(7); // Removing "Bearer " prefix
+			try {
+				Base64.Decoder decoder = Base64.getUrlDecoder();
+				String chunks[] = jwtToken.split("\\.");
+				String payload = new String(decoder.decode(chunks[1]));
+				ObjectMapper mapper = new ObjectMapper();
+				Map<String, Object> map = mapper.readValue(payload, Map.class);
+				email = map.get("email").toString();
+				role=map.get("role").toString();
+				sid=Integer.valueOf(map.get("id").toString());
+				familyId=Integer.valueOf(map.get("familyId").toString());
+				errorCode=0;
+				} 
+			catch (Exception e) {
+				errorCode=500;
+				errorMessage=e.getMessage();				
+			}
+		}
+		try
+		{
+		List<User> users = null;
+		if(errorCode==0 && (role.equals("Super") || role.equals("Admin") || role.equals("User")||role.equals("Member")))
+		{		
+			users=uRepo.findAllByFamilyIdAndStatusAndRoleNot(familyId,"Approved","Super");
+			data.put("users", users);
+			message="success";			
+		}
+		else
+		{
+			errorCode=400;
+			errorMessage="Invalid Token";
+		}
+		}
+		catch(Exception e)
+		{
+			errorCode=500;
+			errorMessage=e.getMessage();
+		}		
+		data.put("message",message);
+		data.put("errorMessage",errorMessage);	
+		data.put("errorCode",errorCode);		
+		if(errorCode==0)
+			return new ResponseEntity<>(data, HttpStatus.OK);
+		else 
+			return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);  	
+	}  	
 	
 }

@@ -145,17 +145,19 @@ public class EventController {
 		if(errorCode==0)
 		{
 		try {	
+			
 			String fname=System.currentTimeMillis()+".jpg";
+			if(!(event.getEventImage()!=null && event.getEventImage().length()!=0))				
+			{
 			event.setEventImage(fname);
-			eRepo.save(event);	
-			
-			
 			String srcPath = context.getRealPath("/") + "\\events\\dummy.jpg";
 			String destPath = context.getRealPath("/") + "\\events\\"+fname;
 			File srcFile=new File(srcPath);
 			File destFile=new File(destPath);
 			if(!destFile.exists())
 			FileUtils.copyFile(new File(srcPath), new File(destPath));
+			}
+			eRepo.save(event);
 			message = "Data saved successfully";
 			}
 		catch (Exception e) {			
@@ -170,8 +172,7 @@ public class EventController {
 			return new ResponseEntity<>(data, HttpStatus.OK);
 		else 
 			return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);		
-    }
-		
+    }		
 	@GetMapping("/event/{eventId}")
 	public ResponseEntity<Object> getEvent(@PathVariable int eventId, @RequestHeader("Authorization") String authorizationHeader)
 		{		
@@ -190,7 +191,7 @@ public class EventController {
 				Map<String, String> map = mapper.readValue(payload, Map.class);
 				email = map.get("email");
 				role = map.get("role");	
-				if(role.equals("User")||role.equals("Super")||role.equals("Admin"))
+				if(role.equals("User")||role.equals("Super")||role.equals("Admin")||role.equals("Member"))
 				{
 					System.out.println("Hello2"+role);
 				}
@@ -288,6 +289,8 @@ public class EventController {
 			else
 			{
 				event.setEventStatus(eventStatus);
+				if(eventStatus==false)
+					event.setBookingStatus(false);
 				eRepo.save(event);
 				message="Event Status Changed";
 			}
@@ -434,7 +437,34 @@ public class EventController {
 			return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
       
 	}
-	
-	
-	
+
+	@GetMapping("/event/all/list")
+	public ResponseEntity<Object> getAllEvents() {
+		String message="";
+		String errorMessage="";
+		int errorCode=0;
+		List<Event> myEvents=null;
+		try
+		{
+			myEvents= eRepo.findByEventStatusOrderByEventDateDesc(true);
+			
+		}
+	   catch(Exception e)
+	   {
+		   errorCode=500;
+		   errorMessage=e.getMessage();
+		   myEvents=Collections.emptyList();
+	   }
+		
+		Map<String, Object> data = new HashMap<>();	
+		data.put("data", myEvents);
+		data.put("message",message);
+		data.put("errorMessage",errorMessage);	
+		data.put("errorCode",errorCode);		
+	    if(errorCode==0)
+			return new ResponseEntity<>(data, HttpStatus.OK);
+		else 
+			return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
+      
+	}	
 }
