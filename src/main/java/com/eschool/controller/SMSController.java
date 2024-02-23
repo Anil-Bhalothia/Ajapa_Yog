@@ -10,7 +10,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,21 +17,22 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
-
+import com.eschool.beans.Attendance;
 import com.eschool.beans.Event;
 import com.eschool.beans.EventRegistration;
 import com.eschool.beans.User;
+import com.eschool.repo.AttendanceRepository;
 import com.eschool.repo.EventRegistrationRepository;
 import com.eschool.repo.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 @RestController
 public class SMSController {
 	@Autowired
 	EventRegistrationRepository erRepo;
 	@Autowired
 	UserRepository uRepo;
-	
+	@Autowired
+	AttendanceRepository aRepo;	
 	String message;
 	String errorMessage;
 	int errorCode;
@@ -132,8 +132,8 @@ public class SMSController {
     	for(EventRegistration ev:eventRegistrations)
     	{
     		User user=uRepo.findById(ev.getUserId());
-    		//Attendance attendance=aRepo.findByUserIdAndEventId(user.getId(), eventId);
-     		//if(attendance!=null && attendance.getPresent()==true)
+    		Attendance attendance=aRepo.findByUserIdAndEventId(user.getId(), eventId);
+    		if(attendance!=null && attendance.getPresent()==true)
      		users.add(user);
     	}     	
      }   
@@ -143,8 +143,8 @@ public class SMSController {
      	for(EventRegistration ev:eventRegistrations)
      	{
      		User user=uRepo.findById(ev.getUserId());
-     		//Attendance attendance=aRepo.findByUserIdAndEventId(user.getId(), eventId);
-      		//if(attendance!=null && attendance.getPresent()==true && && user.getRole().equals("User"))
+     		Attendance attendance=aRepo.findByUserIdAndEventId(user.getId(), eventId);
+      		if(attendance!=null && attendance.getPresent()==true && user.getRole().equals("User"))
       		users.add(user);
      	}     	
      } 

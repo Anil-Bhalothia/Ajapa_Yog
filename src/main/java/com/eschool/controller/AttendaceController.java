@@ -36,14 +36,18 @@ public class AttendaceController {
 	@Autowired
 	UserRepository uRepo;
 	@GetMapping("event/registrations/{eventId}")
-	public ResponseEntity<Object> fetchRegisteredUserByEvent(@PathVariable int eventId,@RequestHeader("Authorization") String authorizationHeader) {
+	public ResponseEntity<Object> fetchRegisteredUserByEvent(@RequestParam int page, @RequestParam int rowsPerPage,@PathVariable int eventId,@RequestHeader("Authorization") String authorizationHeader) {
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
 		int sid=0;
 		String email=null,role=null;
 		int familyId=0;
+		int start=(page-1)*rowsPerPage;
+		int end=start+rowsPerPage;
 		Map<String, Object> data = new HashMap<>();
+		List<UserForAttendance> myUsers=new ArrayList<UserForAttendance>();
+		List<UserForAttendance> users=new ArrayList<UserForAttendance>();
 		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
 			String jwtToken = authorizationHeader.substring(7); // Removing "Bearer " prefix
 			try {
@@ -63,7 +67,9 @@ public class AttendaceController {
 				errorMessage=e.getMessage();	
 			}
 		}
-		List<UserForAttendance> users=new ArrayList<UserForAttendance>();
+		try
+		{
+		
 		List<EventRegistration> eventRegistrations=erRepo.findAllByEventIdOrderByFamilyId(eventId);
 		if(errorCode==0 && (role.equals("Super")||role.equals("Admin")))
 		{
@@ -78,11 +84,43 @@ public class AttendaceController {
 			userForAttendance=new UserForAttendance(user, false,"0",eventRegistration.getSpecificRequirements());	
 		users.add(userForAttendance);
 		}
+		
+		if (start >= 0 && end < users.size() && start <= end) {
+	    	errorCode=0;
+	    	message="success";	    	
+	        myUsers=users.subList(start, end);
+			} 
+			else if (start >= 0 && start <= end) 
+			{
+	    	errorCode=0;
+	    	message="success";
+	    	myUsers=users.subList(start, users.size());
+			}
+			else{
+	    	errorCode=400;
+	    	errorMessage="No more events";
+	    	myUsers=Collections.emptyList();
+			}		
 		}
-		data.put("users", users);
+		}
+		catch(Exception ex)
+		{
+			errorMessage=ex.getMessage();
+			errorCode=500;
+			myUsers=Collections.emptyList();
+		}
+		data.put("users", myUsers);
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
-		data.put("errorCode",errorCode);		
+		data.put("errorCode",errorCode);
+		if(users!=null)
+			data.put("totalElement", users.size());		    
+			data.put("pageNumber", page);		
+			data.put("rowPerPage", rowsPerPage);
+			if(users!=null && users.size()%rowsPerPage==0)
+				data.put("totalNoOfPages", users.size()/rowsPerPage);	
+			else if(users!=null)
+				data.put("totalNoOfPages", users.size()/rowsPerPage+1);
 		if(errorCode==0)
 			return new ResponseEntity<>(data, HttpStatus.OK);
 		else 
