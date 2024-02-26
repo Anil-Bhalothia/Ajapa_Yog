@@ -49,8 +49,7 @@ public class FoodController {
 				email = map.get("email").toString();
 				role=map.get("role").toString();
 				sid=Integer.valueOf(map.get("id").toString());				
-				familyId=Integer.valueOf(map.get("familyId").toString());
-				
+				familyId=Integer.valueOf(map.get("familyId").toString());				
 			} 
 			catch (Exception e) {
 				errorCode=500;
@@ -90,8 +89,7 @@ public class FoodController {
 				email = map.get("email").toString();
 				role=map.get("role").toString();
 				sid=Integer.valueOf(map.get("id").toString());				
-				familyId=Integer.valueOf(map.get("familyId").toString());
-				
+				familyId=Integer.valueOf(map.get("familyId").toString());				
 			} 
 			catch (Exception e) {
 				errorCode=500;

@@ -2,6 +2,7 @@ package com.eschool.service;
 
 import com.eschool.beans.EventRegistration;
 import com.eschool.beans.User;
+import com.eschool.beans.UserForAttendance;
 import com.eschool.repo.UserRepository;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
@@ -132,6 +133,65 @@ public class PDFService {
        }
        return baos.toByteArray();
    }
-
+    
+    
+    public byte[] generatePdfFileForAttendance(List<UserForAttendance> users) throws IOException {
+   	 Document document = new Document(PageSize.A4.rotate());
+   	 document.setMargins(-20, -20, 10, 10);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+       try {
+        PdfWriter.getInstance(document, baos);
+        document.open();
+        String headers[]= {"Sr. No","Name","Email","Mobile Number","Country","State","City","DOB","Attendance","Accommodation"};
+        PdfPTable table = new PdfPTable(headers.length);
+        // Add headers
+        for (String header : headers) {
+            PdfPCell cell = new PdfPCell(new Phrase(header));
+            table.addCell(cell);
+        }
+        // Add data
+        int i=1;
+        for (UserForAttendance user : users) {             
+       	 PdfPCell cellSrNo = new PdfPCell(new Phrase(""+i));
+            table.addCell(cellSrNo);
+            PdfPCell cellName = new PdfPCell(new Phrase(user.getUser().getName()));
+            table.addCell(cellName);
+            PdfPCell cellEmail = new PdfPCell(new Phrase(user.getUser().getEmail()));
+            table.addCell(cellEmail);
+            PdfPCell cellMobileNo = new PdfPCell(new Phrase(user.getUser().getMobileNumber()));
+            table.addCell(cellMobileNo);
+            PdfPCell cellCountry = new PdfPCell(new Phrase(user.getUser().getCountry().split(":")[1]));
+            table.addCell(cellCountry);
+            PdfPCell cellState = new PdfPCell(new Phrase(user.getUser().getState().split(":")[1]));
+            table.addCell(cellState);
+            PdfPCell cellCity = new PdfPCell(new Phrase(user.getUser().getCity().split(":")[1]));
+            table.addCell(cellCity);
+            PdfPCell cellDOB = new PdfPCell(new Phrase(user.getUser().getDob()));
+            table.addCell(cellDOB);
+            PdfPCell cellIsPresent;
+            PdfPCell cellHallNo;
+            if(user.isPresent())
+            	cellIsPresent= new PdfPCell(new Phrase("Present"));
+            else
+            	cellIsPresent=new PdfPCell(new Phrase("Absent"));
+            table.addCell(cellIsPresent); 
+            
+            if(user.getHallNo().length()==0)
+            	cellHallNo=new PdfPCell(new Phrase("NA"));
+            else
+            	cellHallNo=new PdfPCell(new Phrase(user.getHallNo()));
+            table.addCell(cellHallNo);
+            i++;
+        }
+        document.add(table);
+        document.close();
+       }
+       catch(Exception ex)
+       {
+       	System.out.println(ex.getMessage());
+       }
+       return baos.toByteArray();
+   }
+   
     
 }

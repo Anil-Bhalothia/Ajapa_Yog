@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -26,7 +28,11 @@ import com.eschool.beans.UserForAttendance;
 import com.eschool.repo.AttendanceRepository;
 import com.eschool.repo.EventRegistrationRepository;
 import com.eschool.repo.UserRepository;
+import com.eschool.service.ExcelService;
+import com.eschool.service.PDFService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.servlet.ServletContext;
 @RestController
 public class AttendaceController {
 	@Autowired
@@ -35,6 +41,9 @@ public class AttendaceController {
 	EventRegistrationRepository erRepo;
 	@Autowired
 	UserRepository uRepo;
+	@Autowired
+	ServletContext context;
+	// To get details of attendance and hall nos 
 	@GetMapping("event/registrations/{eventId}")
 	public ResponseEntity<Object> fetchRegisteredUserByEvent(@RequestParam int page, @RequestParam int rowsPerPage,@PathVariable int eventId,@RequestHeader("Authorization") String authorizationHeader) {
 		String message="";
@@ -115,17 +124,169 @@ public class AttendaceController {
 		data.put("errorCode",errorCode);
 		if(users!=null)
 			data.put("totalElement", users.size());		    
-			data.put("pageNumber", page);		
-			data.put("rowPerPage", rowsPerPage);
-			if(users!=null && users.size()%rowsPerPage==0)
+		data.put("pageNumber", page);		
+		data.put("rowPerPage", rowsPerPage);
+		if(users!=null && users.size()%rowsPerPage==0)
 				data.put("totalNoOfPages", users.size()/rowsPerPage);	
-			else if(users!=null)
+		else if(users!=null)
 				data.put("totalNoOfPages", users.size()/rowsPerPage+1);
 		if(errorCode==0)
 			return new ResponseEntity<>(data, HttpStatus.OK);
 		else 
 			return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
  	}
+	
+	@GetMapping("reportPdf/event/registrations/{eventId}")
+	public ResponseEntity<Object> reportPdfFetchRegisteredUserByEvent(@PathVariable int eventId,@RequestHeader("Authorization") String authorizationHeader) {
+		String fileName=context.getRealPath("/")+"/reports/"+System.currentTimeMillis()+".pdf";
+		byte[] pdfBytes=null;
+		String message="";
+		String errorMessage="";
+		int errorCode=0;
+		int sid=0;
+		String email=null,role=null;
+		int familyId=0;
+		Map<String, Object> data = new HashMap<>();
+		List<UserForAttendance> myUsers=new ArrayList<UserForAttendance>();
+		List<UserForAttendance> users=new ArrayList<UserForAttendance>();
+		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+			String jwtToken = authorizationHeader.substring(7); // Removing "Bearer " prefix
+			try {
+				Base64.Decoder decoder = Base64.getUrlDecoder();
+				String chunks[] = jwtToken.split("\\.");
+				String payload = new String(decoder.decode(chunks[1]));
+				ObjectMapper mapper = new ObjectMapper();
+				Map<String, Object> map = mapper.readValue(payload, Map.class);
+				email = map.get("email").toString();
+				role=map.get("role").toString();
+				sid=Integer.valueOf(map.get("id").toString());				
+				familyId=Integer.valueOf(map.get("familyId").toString());
+				
+			} 
+			catch (Exception e) {
+				errorCode=500;
+				errorMessage=e.getMessage();	
+			}
+		}
+		try
+		{
+		
+		List<EventRegistration> eventRegistrations=erRepo.findAllByEventIdOrderByFamilyId(eventId);
+		if(errorCode==0 && (role.equals("Super")||role.equals("Admin")))
+		{
+		for(EventRegistration eventRegistration:eventRegistrations)
+		{
+		User user=uRepo.findById(eventRegistration.getUserId());
+		Attendance attendance=aRepo.findByUserIdAndEventId(eventRegistration.getUserId(),eventId);
+		UserForAttendance userForAttendance;
+		if(attendance!=null)		
+			userForAttendance=new UserForAttendance(user,attendance.getPresent(),attendance.getHallNo(),eventRegistration.getSpecificRequirements());
+		else
+			userForAttendance=new UserForAttendance(user, false,"0",eventRegistration.getSpecificRequirements());	
+		users.add(userForAttendance);
+		}
+		
+		PDFService pdfGeneratorService=new PDFService();
+		pdfBytes = pdfGeneratorService.generatePdfFileForAttendance(users);
+        convertByteArrayToFile(pdfBytes, fileName);
+        data.put("fileName",fileName);
+		}
+		}
+		catch(Exception ex)
+		{
+			errorMessage=ex.getMessage();
+			errorCode=500;
+			
+		}	
+		data.put("message",message);
+		data.put("errorMessage",errorMessage);	
+		data.put("errorCode",errorCode);
+		if(errorCode==0)
+			return new ResponseEntity<>(data, HttpStatus.OK);
+		else 
+			return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
+ 	}
+	
+	public static void convertByteArrayToFile(byte[] bytes, String filePath) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(filePath)) {
+            fos.write(bytes);
+        }
+    }
+	
+	@GetMapping("reportExcel/event/registrations/{eventId}")
+	public ResponseEntity<Object> reportExcelFetchRegisteredUserByEvent(@PathVariable int eventId,@RequestHeader("Authorization") String authorizationHeader) {
+		String fileName=context.getRealPath("/")+"/reports/"+System.currentTimeMillis()+".xlsx";
+		String message="";
+		String errorMessage="";
+		int errorCode=0;
+		int sid=0;
+		String email=null,role=null;
+		int familyId=0;
+		Map<String, Object> data = new HashMap<>();
+		List<UserForAttendance> myUsers=new ArrayList<UserForAttendance>();
+		List<UserForAttendance> users=new ArrayList<UserForAttendance>();
+		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+			String jwtToken = authorizationHeader.substring(7); // Removing "Bearer " prefix
+			try {
+				Base64.Decoder decoder = Base64.getUrlDecoder();
+				String chunks[] = jwtToken.split("\\.");
+				String payload = new String(decoder.decode(chunks[1]));
+				ObjectMapper mapper = new ObjectMapper();
+				Map<String, Object> map = mapper.readValue(payload, Map.class);
+				email = map.get("email").toString();
+				role=map.get("role").toString();
+				sid=Integer.valueOf(map.get("id").toString());				
+				familyId=Integer.valueOf(map.get("familyId").toString());
+				
+			} 
+			catch (Exception e) {
+				errorCode=500;
+				errorMessage=e.getMessage();
+				System.out.print("Error"+errorMessage);
+			}
+		}
+		try
+		{
+		
+		List<EventRegistration> eventRegistrations=erRepo.findAllByEventIdOrderByFamilyId(eventId);
+		if(errorCode==0 && (role.equals("Super")||role.equals("Admin")))
+		{
+		for(EventRegistration eventRegistration:eventRegistrations)
+		{
+		User user=uRepo.findById(eventRegistration.getUserId());
+		Attendance attendance=aRepo.findByUserIdAndEventId(eventRegistration.getUserId(),eventId);
+		UserForAttendance userForAttendance;
+		if(attendance!=null)		
+			userForAttendance=new UserForAttendance(user,attendance.getPresent(),attendance.getHallNo(),eventRegistration.getSpecificRequirements());
+		else
+			userForAttendance=new UserForAttendance(user, false,"0",eventRegistration.getSpecificRequirements());	
+		users.add(userForAttendance);
+		}
+		
+		ExcelService service=new ExcelService();
+		service.generateExcelFileForAttendanceAndHallNo(users,fileName);
+		data.put("fileName",fileName);
+		}
+		}
+		catch(Exception ex)
+		{
+			errorMessage=ex.getMessage();
+			errorCode=500;
+			System.out.print("Error"+errorMessage);
+		}	
+		data.put("message",message);
+		data.put("errorMessage",errorMessage);	
+		data.put("errorCode",errorCode);
+		if(errorCode==0)
+			return new ResponseEntity<>(data, HttpStatus.OK);
+		else 
+			return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
+ 	}
+	
+	
+	
+	
+	
 	
 	void sendRoomBookingSMS(String pno,String message)
 	{

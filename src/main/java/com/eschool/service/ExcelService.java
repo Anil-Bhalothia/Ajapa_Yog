@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.eschool.beans.EventRegistration;
 import com.eschool.beans.User;
+import com.eschool.beans.UserForAttendance;
 import com.eschool.repo.UserRepository;
 
 import java.io.FileOutputStream;
@@ -53,7 +54,7 @@ public class ExcelService {
         // Close the workbook to release resources
         workbook.close();
     }    
-  //Generate excel file for all users
+  //Generate excel file for all users registered for an event 
     public void generateExcelFileForEventRegistrations(List<EventRegistration> eventRegistrations, String filePath,UserRepository uRepo) throws IOException {
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Event Registrations");
@@ -106,5 +107,48 @@ public class ExcelService {
         // Close the workbook to release resources
         workbook.close();
     }
-    
+  //Generate excel file for attendance and halls
+    public void generateExcelFileForAttendanceAndHallNo(List<UserForAttendance> userForAttendance, String filePath) throws IOException {
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Attendance and Accommodation Details");
+        // Create header row
+        Row headerRow = sheet.createRow(0);
+        headerRow.createCell(0).setCellValue("Sr. No");
+        headerRow.createCell(1).setCellValue("Name");
+        headerRow.createCell(2).setCellValue("Email");
+        headerRow.createCell(3).setCellValue("Mobile Number");
+        headerRow.createCell(4).setCellValue("Country");
+        headerRow.createCell(5).setCellValue("State");
+        headerRow.createCell(6).setCellValue("City");
+        headerRow.createCell(7).setCellValue("DOB");
+        headerRow.createCell(8).setCellValue("Attendance");
+        headerRow.createCell(9).setCellValue("Accommodation");
+        // Populate data
+        int rowNum = 1;
+        for (UserForAttendance u :userForAttendance) {
+            Row row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(rowNum-1);
+            row.createCell(1).setCellValue(u.getUser().getName());
+            row.createCell(2).setCellValue(u.getUser().getEmail());
+            row.createCell(3).setCellValue(u.getUser().getMobileNumber());
+            row.createCell(4).setCellValue(u.getUser().getCountry().split(":")[1]);
+            row.createCell(5).setCellValue(u.getUser().getState().split(":")[1]);
+            row.createCell(6).setCellValue(u.getUser().getCity().split(":")[1]);
+            row.createCell(7).setCellValue(u.getUser().getDob());
+            if(u.isPresent())
+            	row.createCell(8).setCellValue("Present");
+            else
+            	row.createCell(8).setCellValue("Absent");
+            if(u.getHallNo().length()==0)
+            	row.createCell(9).setCellValue("NA");
+            else
+            	row.createCell(9).setCellValue(u.getHallNo());
+        }
+        // Write the workbook to a file
+        try (FileOutputStream fileOut = new FileOutputStream(filePath)) {
+            workbook.write(fileOut);
+        }
+        // Close the workbook to release resources
+        workbook.close();
+    }    
 }
