@@ -144,8 +144,7 @@ public class EventController {
 		}
 		if(errorCode==0)
 		{
-		try {	
-			
+		try {			
 			String fname=System.currentTimeMillis()+".jpg";
 			if(!(event.getEventImage()!=null && event.getEventImage().length()!=0))				
 			{

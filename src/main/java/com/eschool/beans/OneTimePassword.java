@@ -2,13 +2,14 @@ package com.eschool.beans;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 @Entity
 @Table(name="OneTimePassword")
 public class OneTimePassword {
 	@Id
-	@GeneratedValue
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	int id;
 	String email,mobileNumber,countryCode,otp;
 	public OneTimePassword() {

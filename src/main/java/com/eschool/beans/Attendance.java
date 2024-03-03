@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 @Table(name="attendance")
 public class Attendance {
 	@Id
-	@GeneratedValue
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
     private int attendanceId;
     private int eventId;
     private int userId;

@@ -3,13 +3,14 @@ package com.eschool.beans;
 import java.util.Date;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 @Entity
 @Table(name = "event_registration")
 public class EventRegistration {
 	@Id
-	@GeneratedValue
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
     private int registrationId;
     private int eventId;
     private int userId;

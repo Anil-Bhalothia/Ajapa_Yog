@@ -56,7 +56,7 @@ public class FoodController {
 				errorMessage=e.getMessage();	
 			}
 		}
-		Food food=null;
+	Food food=null;
 	if(errorCode==0 && (role.equals("Admin")||role.equals("Super")))	
 	{		
 	food=frepo.findByEventIdAndEntryDateAndTimings(eventId, entryDate, timings);
@@ -149,8 +149,7 @@ public class FoodController {
 		frepo.save(existingFood);		
 	}
 	data.put("message","Data Saved");
-	}	
-	
+	}		
 	data.put("errorMessage",errorMessage);
 	data.put("errorCode",errorCode);
 	if(errorCode==0)
