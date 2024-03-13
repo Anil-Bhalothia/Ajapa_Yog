@@ -1,4 +1,6 @@
 package com.eschool.controller;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,11 +25,14 @@ import com.eschool.beans.AttendaceDetails;
 import com.eschool.beans.Attendance;
 import com.eschool.beans.Event;
 import com.eschool.beans.EventRegistration;
+import com.eschool.beans.SMSHandler;
 import com.eschool.beans.User;
 import com.eschool.beans.UserForAttendance;
 import com.eschool.repo.AttendanceRepository;
 import com.eschool.repo.EventRegistrationRepository;
+import com.eschool.repo.EventRepository;
 import com.eschool.repo.UserRepository;
+import com.eschool.service.EmailService;
 import com.eschool.service.ExcelService;
 import com.eschool.service.PDFService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,10 +47,15 @@ public class AttendaceController {
 	@Autowired
 	UserRepository uRepo;
 	@Autowired
+	EventRepository eRepo;
+	@Autowired
 	ServletContext context;
+	@Autowired
+	EmailService emailService;
 	// To get details of attendance and hall nos 
 	@GetMapping("event/registrations/{eventId}")
 	public ResponseEntity<Object> fetchRegisteredUserByEvent(@RequestParam int page, @RequestParam int rowsPerPage,@PathVariable int eventId,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -73,7 +83,8 @@ public class AttendaceController {
 			} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();	
+				errorMessage=e.getMessage();
+				log.error("Inside event/registrations/{eventId}"+errorMessage);
 			}
 		}
 		try
@@ -117,6 +128,7 @@ public class AttendaceController {
 			errorMessage=ex.getMessage();
 			errorCode=500;
 			myUsers=Collections.emptyList();
+			log.error("Inside event/registrations/{eventId}"+errorMessage);
 		}
 		data.put("users", myUsers);
 		data.put("message",message);
@@ -138,6 +150,7 @@ public class AttendaceController {
 	
 	@GetMapping("reportPdf/event/registrations/{eventId}")
 	public ResponseEntity<Object> reportPdfFetchRegisteredUserByEvent(@PathVariable int eventId,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String fileName=context.getRealPath("/")+"/reports/"+System.currentTimeMillis()+".pdf";
 		byte[] pdfBytes=null;
 		String message="";
@@ -165,7 +178,8 @@ public class AttendaceController {
 			} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();	
+				errorMessage=e.getMessage();
+				log.error("Inside reportPdf/event/registrations/{eventId}"+errorMessage);
 			}
 		}
 		try
@@ -196,6 +210,7 @@ public class AttendaceController {
 		{
 			errorMessage=ex.getMessage();
 			errorCode=500;
+			log.error("Inside reportPdf/event/registrations/{eventId}"+errorMessage);
 			
 		}	
 		data.put("message",message);
@@ -215,6 +230,7 @@ public class AttendaceController {
 	
 	@GetMapping("reportExcel/event/registrations/{eventId}")
 	public ResponseEntity<Object> reportExcelFetchRegisteredUserByEvent(@PathVariable int eventId,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String fileName=context.getRealPath("/")+"/reports/"+System.currentTimeMillis()+".xlsx";
 		String message="";
 		String errorMessage="";
@@ -241,8 +257,8 @@ public class AttendaceController {
 			} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();
-				System.out.print("Error"+errorMessage);
+				errorMessage=e.getMessage();				
+				log.error("Inside reportExcel/event/registrations/{eventId}"+errorMessage);
 			}
 		}
 		try
@@ -272,7 +288,7 @@ public class AttendaceController {
 		{
 			errorMessage=ex.getMessage();
 			errorCode=500;
-			System.out.print("Error"+errorMessage);
+			log.error("Inside reportExcel/event/registrations/{eventId}"+errorMessage);
 		}	
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -290,6 +306,7 @@ public class AttendaceController {
 	
 	void sendRoomBookingSMS(String pno,String message)
 	{
+		Logger log=LoggerFactory.getLogger(getClass());
 		try {
             String user = "AjapaYog";
             String pass = "123456";
@@ -326,17 +343,18 @@ public class AttendaceController {
             }
             in.close();
 
-            // Print the response
-            System.out.println("Response: " + response.toString());
-
+         
             connection.disconnect();
         } catch (Exception e) {
             e.printStackTrace();
+            log.error("Inside attendance Controller send room booking message"+e.getMessage());
         }
 	}
 	
 	@PostMapping("attendance/save")
 	public ResponseEntity<Object> saveAttendance(@RequestBody AttendaceDetails attendaceDetails,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
+		
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -360,11 +378,14 @@ public class AttendaceController {
 			} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();	
+				errorMessage=e.getMessage();
+				log.error("Inside attendance/save"+e.getMessage());
 			}
 		}
 		if(errorCode==0 && (role.equals("Super")||role.equals("Admin")))
-		{		
+		{
+			try
+			{
 		int n=attendaceDetails.getEvents().size();
 	    ArrayList<Integer> events=attendaceDetails.getEvents();
 	    ArrayList<Integer> users=attendaceDetails.getUsers();
@@ -385,6 +406,13 @@ public class AttendaceController {
 	    		aRepo.save(attendance);
 	    	}
 	    }
+			}
+			catch(Exception e)
+			{
+				errorCode=500;
+				errorMessage=e.getMessage();				
+				log.error("Inside attendance/save"+e.getMessage());
+			}
 		}
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -397,7 +425,8 @@ public class AttendaceController {
 
 	@PostMapping("bookingStatus/send")
 	public ResponseEntity<Object> sendRoomBookingStatus(@RequestParam("id") int id,@RequestParam("eventId") int eventId,@RequestParam("hallNo") String hallNo,@RequestParam("present") boolean present,@RequestHeader("Authorization") String authorizationHeader) 
-	{	   
+	{	  
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -421,7 +450,8 @@ public class AttendaceController {
 			} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();	
+				errorMessage=e.getMessage();
+				log.error("Inside bookingStatus/send"+e.getMessage());
 			}
 		}
 		try
@@ -446,6 +476,7 @@ public class AttendaceController {
 	    		
 	    }
 		User user=uRepo.findById(id);
+		Event event=eRepo.findByEventId(eventId);
 		String mobileNo=user.getMobileNumber();
 		if(user.getMobileNumber().trim().length()==0)
 		{
@@ -453,14 +484,16 @@ public class AttendaceController {
 			User headUser=uRepo.findByFamilyIdAndRole(fId,"User");
 			mobileNo=headUser.getMobileNumber();			
 		}		
-		System.out.println(user.getName());
-		sendRoomBookingSMS(mobileNo, user.getName()+":"+hallNo);
+		String msg="Jai Guru. Your room/hall number for "+event.getEventName()+" is "+hallNo+". Please visit reception desk once you reach Ashram.";
+		new SMSHandler().sendCustom(mobileNo, msg);
+		emailService.sendEmail(user.getEmail(),"Regarding Booking", msg);
 		message="User is notified about hall number";
 		}
 		catch(Exception ex)
 		{
 			errorCode=500;
 			errorMessage=ex.getMessage();
+			log.error("Inside bookingStatus/send"+ex.getMessage());
 		}
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -475,6 +508,7 @@ public class AttendaceController {
 	@PostMapping("attendance/save/one")
 	public ResponseEntity<Object> saveOneAttendance(@RequestParam("id") int id,@RequestParam("eventId") int eventId,@RequestParam("hallNo") String hallNo,@RequestParam("present") boolean present,@RequestHeader("Authorization") String authorizationHeader) 
 	{	   
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -499,6 +533,7 @@ public class AttendaceController {
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
+				log.error("Inside attendance/save/one"+errorMessage);
 			}
 		}
 		try
@@ -526,6 +561,7 @@ public class AttendaceController {
 		{
 			errorCode=500;
 			errorMessage=ex.getMessage();
+			log.error("Inside attendance/save/one"+errorMessage);
 		}
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	

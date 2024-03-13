@@ -10,6 +10,7 @@ import com.eschool.beans.EventRegistration;
 import com.eschool.beans.User;
 public interface EventRegistrationRepository  extends CrudRepository<EventRegistration, Integer> {
 	EventRegistration findByRegistrationId(int id);
+	EventRegistration findByEventIdAndUserId(int eventId,int userId);
 	List<EventRegistration> findAllByFamilyIdAndEventId(int familyId,int eventId);
 	List<EventRegistration> findAllByEventIdOrderByFamilyId(int eventId);
 	List<EventRegistration> findAllByUserIdOrderByRegistrationIdDesc(int userId);

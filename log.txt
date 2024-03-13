@@ -1,0 +1,92 @@
+2024-03-12T09:43:56.966+05:30  INFO 8276 --- [main] com.eschool.AjapaYogApplicationTests     : Starting AjapaYogApplicationTests using Java 20.0.2 with PID 8276 (started by Lenovo in D:\JEE\Ajapa_Yog)
+2024-03-12T09:43:56.977+05:30  INFO 8276 --- [main] com.eschool.AjapaYogApplicationTests     : No active profile set, falling back to 1 default profile: "default"
+2024-03-12T09:44:00.164+05:30  INFO 8276 --- [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-03-12T09:44:00.362+05:30  INFO 8276 --- [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 178 ms. Found 10 JPA repository interfaces.
+2024-03-12T09:44:01.917+05:30  INFO 8276 --- [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-03-12T09:44:02.225+05:30  INFO 8276 --- [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2024-03-12T09:44:02.281+05:30  INFO 8276 --- [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2024-03-12T09:44:02.770+05:30  INFO 8276 --- [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-03-12T09:44:02.819+05:30  INFO 8276 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2024-03-12T09:44:03.726+05:30  INFO 8276 --- [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@596afb2f
+2024-03-12T09:44:03.729+05:30  INFO 8276 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2024-03-12T09:44:06.526+05:30  INFO 8276 --- [main] o.h.m.i.EntityInstantiatorPojoStandard   : HHH000182: No default (no-argument) constructor for class: com.eschool.beans.Exp (class must be instantiated by Interceptor)
+2024-03-12T09:44:07.580+05:30  INFO 8276 --- [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-03-12T09:44:07.956+05:30  INFO 8276 --- [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-03-12T09:44:09.335+05:30  INFO 8276 --- [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2024-03-12T09:44:12.203+05:30  WARN 8276 --- [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-03-12T09:44:13.195+05:30  INFO 8276 --- [main] com.eschool.AjapaYogApplicationTests     : Started AjapaYogApplicationTests in 17.28 seconds (process running for 21.153)
+2024-03-12T09:44:14.993+05:30  INFO 8276 --- [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-03-12T09:44:14.997+05:30  INFO 8276 --- [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2024-03-12T09:44:15.062+05:30  INFO 8276 --- [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2024-03-12T09:57:56.574+05:30  INFO 5268 --- [main] com.eschool.AjapaYogApplication          : Starting AjapaYogApplication using Java 20.0.2 with PID 5268 (D:\JEE\Ajapa_Yog\target\classes started by Lenovo in D:\JEE\Ajapa_Yog)
+2024-03-12T09:57:56.578+05:30  INFO 5268 --- [main] com.eschool.AjapaYogApplication          : No active profile set, falling back to 1 default profile: "default"
+2024-03-12T09:57:58.284+05:30  INFO 5268 --- [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-03-12T09:57:58.422+05:30  INFO 5268 --- [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 118 ms. Found 10 JPA repository interfaces.
+2024-03-12T09:57:59.293+05:30  INFO 5268 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2024-03-12T09:57:59.314+05:30  INFO 5268 --- [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2024-03-12T09:57:59.314+05:30  INFO 5268 --- [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2024-03-12T09:57:59.422+05:30  INFO 5268 --- [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2024-03-12T09:57:59.423+05:30  INFO 5268 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2703 ms
+2024-03-12T09:57:59.654+05:30  INFO 5268 --- [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-03-12T09:57:59.739+05:30  INFO 5268 --- [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2024-03-12T09:57:59.803+05:30  INFO 5268 --- [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2024-03-12T09:58:00.250+05:30  INFO 5268 --- [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-03-12T09:58:00.303+05:30  INFO 5268 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2024-03-12T09:58:01.044+05:30  INFO 5268 --- [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@4768b95c
+2024-03-12T09:58:01.047+05:30  INFO 5268 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2024-03-12T09:58:02.843+05:30  INFO 5268 --- [main] o.h.m.i.EntityInstantiatorPojoStandard   : HHH000182: No default (no-argument) constructor for class: com.eschool.beans.Exp (class must be instantiated by Interceptor)
+2024-03-12T09:58:03.218+05:30  INFO 5268 --- [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-03-12T09:58:03.338+05:30  INFO 5268 --- [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-03-12T09:58:03.912+05:30  INFO 5268 --- [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2024-03-12T09:58:05.185+05:30  WARN 5268 --- [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-03-12T09:58:05.935+05:30  INFO 5268 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path ''
+2024-03-12T09:58:05.961+05:30  INFO 5268 --- [main] com.eschool.AjapaYogApplication          : Started AjapaYogApplication in 10.515 seconds (process running for 12.682)
+2024-03-12T10:04:04.396+05:30  INFO 5268 --- [http-nio-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-03-12T10:04:04.397+05:30  INFO 5268 --- [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2024-03-12T10:04:04.399+05:30  INFO 5268 --- [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2024-03-12T10:04:04.553+05:30 ERROR 5268 --- [http-nio-8080-exec-2] com.eschool.controller.UserController    : Inside changeStatusFor input string: "changeStatus"
+2024-03-12T11:52:32.883+05:30  WARN 5268 --- [HikariPool-1 housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=1h47m31s634ms320µs601ns).
+2024-03-12T12:55:25.669+05:30  INFO 5268 --- [RMI TCP Connection(77)-127.0.0.1] inMXBeanRegistrar$SpringApplicationAdmin : Application shutdown requested.
+2024-03-12T12:55:25.689+05:30  INFO 5268 --- [RMI TCP Connection(77)-127.0.0.1] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-03-12T12:55:25.691+05:30  INFO 5268 --- [RMI TCP Connection(77)-127.0.0.1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2024-03-12T12:55:25.698+05:30  INFO 5268 --- [RMI TCP Connection(77)-127.0.0.1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2024-03-12T13:02:03.188+05:30  INFO 9104 --- [main] com.eschool.AjapaYogApplicationTests     : Starting AjapaYogApplicationTests using Java 20.0.2 with PID 9104 (started by Lenovo in D:\JEE\Ajapa_Yog)
+2024-03-12T13:02:03.190+05:30  INFO 9104 --- [main] com.eschool.AjapaYogApplicationTests     : No active profile set, falling back to 1 default profile: "default"
+2024-03-12T13:02:04.868+05:30  INFO 9104 --- [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-03-12T13:02:05.074+05:30  INFO 9104 --- [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 174 ms. Found 10 JPA repository interfaces.
+2024-03-12T13:02:05.946+05:30  INFO 9104 --- [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-03-12T13:02:06.111+05:30  INFO 9104 --- [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2024-03-12T13:02:06.212+05:30  INFO 9104 --- [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2024-03-12T13:02:06.810+05:30  INFO 9104 --- [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-03-12T13:02:06.869+05:30  INFO 9104 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2024-03-12T13:02:07.616+05:30  INFO 9104 --- [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@3cdfbbef
+2024-03-12T13:02:07.620+05:30  INFO 9104 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2024-03-12T13:02:09.426+05:30  INFO 9104 --- [main] o.h.m.i.EntityInstantiatorPojoStandard   : HHH000182: No default (no-argument) constructor for class: com.eschool.beans.Exp (class must be instantiated by Interceptor)
+2024-03-12T13:02:09.791+05:30  INFO 9104 --- [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-03-12T13:02:09.863+05:30  INFO 9104 --- [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-03-12T13:02:10.436+05:30  INFO 9104 --- [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2024-03-12T13:02:13.238+05:30  WARN 9104 --- [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-03-12T13:02:14.182+05:30  INFO 9104 --- [main] com.eschool.AjapaYogApplicationTests     : Started AjapaYogApplicationTests in 11.451 seconds (process running for 13.315)
+2024-03-12T13:02:16.350+05:30  INFO 9104 --- [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-03-12T13:02:16.353+05:30  INFO 9104 --- [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2024-03-12T13:02:16.371+05:30  INFO 9104 --- [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2024-03-12T15:13:49.074+05:30  INFO 11448 --- [main] com.eschool.AjapaYogApplicationTests     : Starting AjapaYogApplicationTests using Java 20.0.2 with PID 11448 (started by Lenovo in D:\JEE\Ajapa_Yog)
+2024-03-12T15:13:49.079+05:30  INFO 11448 --- [main] com.eschool.AjapaYogApplicationTests     : No active profile set, falling back to 1 default profile: "default"
+2024-03-12T15:13:51.119+05:30  INFO 11448 --- [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-03-12T15:13:51.228+05:30  INFO 11448 --- [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 95 ms. Found 10 JPA repository interfaces.
+2024-03-12T15:13:52.548+05:30  INFO 11448 --- [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-03-12T15:13:52.714+05:30  INFO 11448 --- [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2024-03-12T15:13:52.825+05:30  INFO 11448 --- [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2024-03-12T15:13:53.754+05:30  INFO 11448 --- [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-03-12T15:13:53.831+05:30  INFO 11448 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2024-03-12T15:13:54.859+05:30  INFO 11448 --- [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@52856ff9
+2024-03-12T15:13:54.863+05:30  INFO 11448 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2024-03-12T15:13:58.199+05:30  INFO 11448 --- [main] o.h.m.i.EntityInstantiatorPojoStandard   : HHH000182: No default (no-argument) constructor for class: com.eschool.beans.Exp (class must be instantiated by Interceptor)
+2024-03-12T15:13:58.670+05:30  INFO 11448 --- [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-03-12T15:13:58.925+05:30  INFO 11448 --- [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-03-12T15:14:00.028+05:30  INFO 11448 --- [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2024-03-12T15:14:04.647+05:30  WARN 11448 --- [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-03-12T15:14:06.138+05:30  INFO 11448 --- [main] com.eschool.AjapaYogApplicationTests     : Started AjapaYogApplicationTests in 17.616 seconds (process running for 20.248)
+2024-03-12T15:14:08.143+05:30  INFO 11448 --- [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-03-12T15:14:08.151+05:30  INFO 11448 --- [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2024-03-12T15:14:08.204+05:30  INFO 11448 --- [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.

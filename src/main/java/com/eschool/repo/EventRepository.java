@@ -14,5 +14,10 @@ public interface EventRepository extends CrudRepository<Event, Integer> {
 	Event findByEventId(int eventId);
 	List<Event> findByEventStatusOrderByEventDateDesc(boolean eventStatus);
 	
-	
+	 @Query("SELECT COUNT(*) FROM Event e")
+	 Long countAllEvent();
+	 
+	 @Query("SELECT COUNT(*) FROM Event e where e.eventStatus=true")
+	 Long countActiveEvents();
+	 
 }

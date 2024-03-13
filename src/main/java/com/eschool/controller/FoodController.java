@@ -4,6 +4,9 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +34,7 @@ public class FoodController {
 	FoodRepository frepo;	
 	@GetMapping("getFoodDetail/{eventId}/{entryDate}/{timings}")
 	Food getFoodDetail(@PathVariable int eventId,@PathVariable String entryDate,@PathVariable String timings,@RequestHeader("Authorization") String authorizationHeader) {	
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -53,12 +57,15 @@ public class FoodController {
 			} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();	
+				errorMessage=e.getMessage();
+				log.error("Inside getFoodDetail/{eventId}/{entryDate}/{timings}"+errorMessage);
 			}
 		}
 	Food food=null;
 	if(errorCode==0 && (role.equals("Admin")||role.equals("Super")))	
-	{		
+	{
+		try
+		{
 	food=frepo.findByEventIdAndEntryDateAndTimings(eventId, entryDate, timings);
 	if(food==null)
 	{		
@@ -66,11 +73,19 @@ public class FoodController {
 		List<Attendance> presentUsers=arepo.findAllByEventId(eventId);
 		food=new Food(0, eventId, entryDate, timings, presentUsers.size(), registeredUsers.size(),0);
 	}
+		}
+		catch(Exception ex)
+		{
+			errorCode=500;
+			errorMessage=ex.getMessage();
+			log.error("Inside getFoodDetail/{eventId}/{entryDate}/{timings}"+errorMessage);
+		}
 	}
 	return food;
 	}
 	@GetMapping("getFoodDetails/{eventId}")
 	List<Food> getFoodDetails(@PathVariable int eventId,@RequestHeader("Authorization") String authorizationHeader) {	
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -94,17 +109,27 @@ public class FoodController {
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
+				log.error("Inside getFoodDetails/{eventId}"+errorMessage);
 			}
 		}
 	List<Food> foods=null;
 	if(errorCode==0 && (role.equals("Admin")||role.equals("Super")))	
-	{		
-		foods=frepo.findAllByEventId(eventId);			
+	{	try
+	{
+		foods=frepo.findAllByEventId(eventId);
+	}
+	catch(Exception ex)
+	{
+		errorCode=500;
+		errorMessage=ex.getMessage();
+		log.error("Inside getFoodDetails/{eventId}"+errorMessage);
+	}
 	}
 	return foods;
 	}
 	@PostMapping("saveFoodDetails")
 	public ResponseEntity<Object> saveFoodDetails(@ModelAttribute Food food,@RequestHeader("Authorization") String authorizationHeader){	
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -128,10 +153,13 @@ public class FoodController {
 			} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();	
+				errorMessage=e.getMessage();
+				log.error("Inside saveFoodDetails"+errorMessage);
 			}
 		}
 	if(errorCode==0 && (role.equals("Admin")||role.equals("Super")))	
+	{
+	try
 	{
 	Food existingFood=frepo.findByEventIdAndEntryDateAndTimings(food.getEventId(),food.getEntryDate(),food.getTimings());	
 	if(existingFood==null)
@@ -149,6 +177,13 @@ public class FoodController {
 		frepo.save(existingFood);		
 	}
 	data.put("message","Data Saved");
+	}
+	catch(Exception ex)
+	{
+		errorCode=500;
+		errorMessage=ex.getMessage();
+		log.error("Inside saveFoodDetails"+errorMessage);
+	}
 	}		
 	data.put("errorMessage",errorMessage);
 	data.put("errorCode",errorCode);

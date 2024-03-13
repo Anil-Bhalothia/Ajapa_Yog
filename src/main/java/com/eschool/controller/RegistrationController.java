@@ -9,6 +9,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +25,11 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.eschool.beans.EventRegistration;
-
+import com.eschool.beans.SMSHandler;
+import com.eschool.beans.User;
 import com.eschool.repo.EventRegistrationRepository;
 import com.eschool.repo.UserRepository;
+import com.eschool.service.EmailService;
 import com.eschool.service.ExcelService;
 import com.eschool.service.PDFService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,8 +44,11 @@ public class RegistrationController {
 	EventRegistrationRepository erRepo;
 	@Autowired
 	ServletContext context;
+	@Autowired
+	EmailService emailService;
 	@PostMapping("event/registration/save")
 	public ResponseEntity<Object> saveEventRegistration(@ModelAttribute EventRegistration eventRegistration,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;		
@@ -69,18 +77,27 @@ public class RegistrationController {
 				} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();	
+				errorMessage=e.getMessage();
+				log.error("Inside event/registration/save"+errorMessage);
 			}
 		}
 		if(errorCode==0)
 		{
 		try {	
-			erRepo.save(eventRegistration);			
-			message="You have been registered successfully";			
+			EventRegistration existingEventRegistration=erRepo.findByEventIdAndUserId(eventRegistration.getEventId(),eventRegistration.getUserId());
+			if(existingEventRegistration!=null)
+				eventRegistration.setRegistrationId(existingEventRegistration.getRegistrationId());
+			erRepo.save(eventRegistration);	
+			String msg="Jai Guru. Your registration for "+eventRegistration.getEventName()+" is successful.";
+			User user=uRepo.findById(eventRegistration.getUserId());
+			new SMSHandler().sendCustom(user.getMobileNumber(), msg);
+			emailService.sendEmail(user.getEmail(), "Regarding Event Registration", msg);
+			message="Your data has been saved successfully";			
 			}
 		catch (Exception e) {			
 			errorMessage = e.getMessage();
 			errorCode=500;
+			log.error("Inside event/registration/save"+errorMessage);
 		}
 		}
 		data.put("message",message);
@@ -93,6 +110,7 @@ public class RegistrationController {
     }
 	@GetMapping("/event/registration/{registrationId}")
 	public ResponseEntity<Object> getEventRegistration(@RequestHeader("Authorization") String authorizationHeader,@PathVariable("registrationId") int registrationId) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -115,7 +133,8 @@ public class RegistrationController {
 				} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();				
+				errorMessage=e.getMessage();
+				log.error("Inside /event/registration/{registrationId}"+errorMessage);
 			}
 		}
 		try
@@ -137,6 +156,7 @@ public class RegistrationController {
 		{
 			errorCode=500;
 			errorMessage=e.getMessage();
+			log.error("Inside /event/registration/{registrationId}"+errorMessage);
 		}		
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -148,7 +168,7 @@ public class RegistrationController {
 	}  	
 	@GetMapping("/event/registration/list")
 	public ResponseEntity<Object> getAllEventRegistrationsByEventId(@RequestParam int page, @RequestParam int rowsPerPage,@RequestParam int eventId,@RequestHeader("Authorization") String authorizationHeader) {
-		
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		String email=null,role=null;		
@@ -178,7 +198,8 @@ public class RegistrationController {
 				} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();	
+				errorMessage=e.getMessage();
+				log.error("Inside /event/registration/list"+errorMessage);
 			}
 		}
 		
@@ -209,6 +230,7 @@ public class RegistrationController {
 		   errorCode=500;
 		   errorMessage=e.getMessage();
 		   myEventRegistrations=Collections.emptyList();
+		   log.error("Inside /event/registration/list"+errorMessage);
 	   }
 	}
 		Map<String, Object> data = new HashMap<>();	
@@ -232,6 +254,7 @@ public class RegistrationController {
 	
 	@GetMapping("reportExcel/event/registration/list")
 	public ResponseEntity<Object> getReportExcelAllEventRegistrationsByEventId(@RequestParam int eventId,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String fileName="";
 		String message="";
 		String errorMessage="";
@@ -260,6 +283,7 @@ public class RegistrationController {
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
+				log.error("Inside reportExcel/event/registration/list"+errorMessage);
 			}
 		}
 		
@@ -277,7 +301,8 @@ public class RegistrationController {
 	   catch(Exception e)
 	   {
 		   errorCode=500;
-		   errorMessage=e.getMessage();		 
+		   errorMessage=e.getMessage();	
+		   log.error("Inside reportExcel/event/registration/list"+errorMessage);
 	   }
 	}
 		Map<String, Object> data = new HashMap<>();	
@@ -293,7 +318,7 @@ public class RegistrationController {
 	
 	@GetMapping("reportPDF/event/registration/list")
 	public ResponseEntity<Object> getReportPDFAllEventRegistrationsByEventId(@RequestParam int eventId,@RequestHeader("Authorization") String authorizationHeader) {
-		
+		Logger log=LoggerFactory.getLogger(getClass());
 		String fileName=context.getRealPath("/")+"/reports/"+System.currentTimeMillis()+".pdf";
 		byte[] pdfBytes=null;
 		String message="";
@@ -323,6 +348,7 @@ public class RegistrationController {
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
+				log.error("Inside reportPDF/event/registration/list"+errorMessage);
 			}
 		}
 		
@@ -338,7 +364,8 @@ public class RegistrationController {
 	   catch(Exception e)
 	   {
 		   errorCode=500;
-		   errorMessage=e.getMessage();		 
+		   errorMessage=e.getMessage();	
+			log.error("Inside reportPDF/event/registration/list"+errorMessage);
 	   }
 	}
 		Map<String, Object> data = new HashMap<>();	
@@ -361,6 +388,7 @@ public class RegistrationController {
 	
 	@PutMapping("/event/registration/delete/{eventId}/{familyId}")
 	public ResponseEntity<Object> deleteAllEventRegistrationsByEventIdAndFamilyId(@RequestParam int eventId, @RequestParam int familyId,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		String email=null,role=null;		
@@ -386,7 +414,8 @@ public class RegistrationController {
 				} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();	
+				errorMessage=e.getMessage();
+				log.error("Inside /event/registration/delete/{eventId}/{familyId}"+errorMessage);
 			}
 		}
 		
@@ -401,6 +430,7 @@ public class RegistrationController {
 	   {
 		   errorCode=500;
 		   errorMessage=e.getMessage();
+		   log.error("Inside /event/registration/delete/{eventId}/{familyId}"+errorMessage);
 		  
 	   }
 	}
@@ -416,6 +446,7 @@ public class RegistrationController {
 	
 	@GetMapping("/event/registration/family/list")
 	public ResponseEntity<Object> getAllEventRegistrationsByFamilyId(@RequestParam int page, @RequestParam int rowsPerPage,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		String email=null,role=null;		
@@ -441,6 +472,7 @@ public class RegistrationController {
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
+				log.error("Inside /event/registration/family/list"+errorMessage);
 			}
 		}
 		
@@ -471,6 +503,7 @@ public class RegistrationController {
 		   errorCode=500;
 		   errorMessage=e.getMessage();
 		   myEventRegistrations=Collections.emptyList();
+		   log.error("Inside /event/registration/family/list"+errorMessage);
 	   }
 	}
 		Map<String, Object> data = new HashMap<>();	
@@ -494,6 +527,7 @@ public class RegistrationController {
 	
 	@GetMapping("/event/registration/family/event/list")
 	public ResponseEntity<Object> getAllEventRegistrationsByFamilyIdAndEventId(@RequestParam int eventId,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		String email=null,role=null;		
@@ -516,6 +550,7 @@ public class RegistrationController {
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
+				log.error("Inside /event/registration/family/event/list"+errorMessage);
 			}
 		}
 		
@@ -530,6 +565,7 @@ public class RegistrationController {
 		   errorCode=500;
 		   errorMessage=e.getMessage();
 		   eventRegistrations=Collections.emptyList();
+		   log.error("Inside /event/registration/family/event/list"+errorMessage);
 	   }
 	}
 		Map<String, Object> data = new HashMap<>();	
@@ -541,14 +577,11 @@ public class RegistrationController {
 			return new ResponseEntity<>(data, HttpStatus.OK);
 		else 
 			return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
-	}
-	
-	
-	
-	
+	}	
 	
 	@PostMapping("event/registration/delete")
 	public ResponseEntity<Object> deleteEventRegistration(@RequestParam int registrationId,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -571,6 +604,7 @@ public class RegistrationController {
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
+				log.error("Inside event/registration/delete"+errorMessage);
 			}
 		}
 		EventRegistration eventRegistration=erRepo.findByRegistrationId(registrationId);
@@ -582,6 +616,7 @@ public class RegistrationController {
 		} catch (Exception e) {			
 			errorMessage = e.getMessage();
 			errorCode=500;
+			log.error("Inside event/registration/delete"+errorMessage);
 		}
 		}
 	else

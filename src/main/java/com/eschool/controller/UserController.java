@@ -18,8 +18,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.ErrorManager;
 
 import org.apache.xmlbeans.impl.common.SystemCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -36,9 +39,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.eschool.beans.Event;
+import com.eschool.beans.MessageTemplates;
 import com.eschool.beans.OneTimePassword;
 import com.eschool.beans.SMSHandler;
 import com.eschool.beans.User;
+import com.eschool.repo.EventRepository;
 import com.eschool.repo.OneTimePasswordRepository;
 import com.eschool.repo.UserRepository;
 import com.eschool.service.EmailService;
@@ -57,9 +62,13 @@ public class UserController {
 	@Autowired
 	EmailService emailService;
 	@Autowired
-	OneTimePasswordRepository oRepo;	
+	OneTimePasswordRepository oRepo;
+	@Autowired
+	EventRepository eRepo;
+	
 	@PostMapping("verifyMobileNumberEmailUsingOTP")
     public ResponseEntity<Object> verifyOTP(@RequestParam("otp") String otp, @RequestParam("email") String email) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -85,7 +94,8 @@ public class UserController {
 		catch(Exception e)
 		{
 			errorCode=500;
-			errorMessage=e.getMessage();			
+			errorMessage=e.getMessage();
+			log.error("Inside verifyMobileNumberEmailUsingOTP"+errorMessage);
 		}		
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -98,6 +108,7 @@ public class UserController {
 	
 	@PostMapping("verifyMobileNumberEmail")
 	public ResponseEntity<Object> verifyMobileNumberEmail(@RequestParam("email") String email,@RequestParam("countryCode") String countryCode,@RequestParam("mobileNumber") String mobileNumber) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -135,12 +146,14 @@ public class UserController {
 			         {
 			        	 errorMessage=e.getMessage();
 			        	 errorCode=500;
+			        	 log.error("Inside verifyMobileNumberEmail"+errorMessage);
 			         }         
 			     }     
 			} 
 		catch (Exception e) {			
 			errorMessage = e.getMessage();
 			errorCode=500;
+			log.error("Inside verifyMobileNumberEmail"+errorMessage);
 		}		
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -153,6 +166,7 @@ public class UserController {
 	
 	@PostMapping("loginUsingOTP")
     public ResponseEntity<Object> loginUsingOTP(@RequestParam("otp") String otp, @RequestParam("email") String email,@RequestParam("mobileNumber") String mobileNumber,@RequestParam("countryCode") String countryCode) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -201,6 +215,7 @@ public class UserController {
        	{
 			if(user.getStatus().equals("Pending")) {
 				errorMessage="Unapproved User";
+				emailService.sendEmail(user.getEmail(), "Regarding Ajapa Registration",new MessageTemplates().getPendingUserTryingLogin());
 				message="";
 				errorCode=400;
 				token="";
@@ -213,6 +228,7 @@ public class UserController {
 			}	
 			else if(user.getStatus().equals("Rejected")) {
 				errorMessage="Rejected User";
+				emailService.sendEmail(user.getEmail(), "Regarding Ajapa Registration",new MessageTemplates().getOnceAdminReject());
 				message="";
 				errorCode=400;
 				token="";
@@ -228,6 +244,7 @@ public class UserController {
     	{
     		errorCode=500;
     		errorMessage=e.getMessage();
+    		log.error("Inside loginUsingOTP"+errorMessage);
     	}       	
     	data.put("token",token);
     	data.put("message",message);
@@ -241,6 +258,7 @@ public class UserController {
 		
 	@PostMapping("sendOTPForLogin")
 	public ResponseEntity<Object> sendOTPForLogin(@RequestParam("email") String email,@RequestParam("countryCode") String countryCode,@RequestParam("mobileNumber") String mobileNumber) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -305,6 +323,7 @@ public class UserController {
     	{
     		errorMessage=e.getMessage();
     		errorCode=500;
+    		log.error("Inside sendOTPForLogin"+errorMessage);
     	}
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -318,6 +337,7 @@ public class UserController {
 	
 	@PostMapping("verifyOTP")
     public ResponseEntity<Object> verifyOTP(@RequestParam("otp") String otp, @RequestParam("email") String email,@RequestParam("mobileNumber") String mobileNumber,@RequestParam("countryCode") String countryCode) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -367,6 +387,7 @@ public class UserController {
     	{
     		errorCode=500;
     		errorMessage=e.getMessage();
+    		log.error("Inside verifyOTP"+errorMessage);
     	}    	
     	data.put("token",token);
     	data.put("message",message);
@@ -380,6 +401,7 @@ public class UserController {
 	
 	@PostMapping("signup")
 	public ResponseEntity<Object> saveUser(@ModelAttribute User user,@RequestParam("file") MultipartFile file) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -404,6 +426,7 @@ public class UserController {
         {
         	errorCode=500;        	
         	errorMessage=e.getMessage();
+        	log.error("Inside signup"+errorMessage);
         }
 		Map<String, Object> data = new HashMap<>();		
 		try {			
@@ -433,6 +456,7 @@ public class UserController {
 			String fname=System.currentTimeMillis()+".jpg";
 			user.setProfileImage(fname);
 			uRepo.save(user);
+			
 			if(age>=15)
 			{
 			User savedUser=null;
@@ -455,11 +479,13 @@ public class UserController {
 			}
 			Files.copy(file.getInputStream(), root);
 			}
+			emailService.sendEmail(user.getEmail(),"Regarding AJAPA Registration",new MessageTemplates().getSignupEmailMessage());
 			message = "Data saved successfully";
 			}
 		} catch (Exception e) {			
 			errorMessage = e.getMessage();
 			errorCode=500;
+			log.error("Inside signup"+errorMessage);
 		}		
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -472,6 +498,7 @@ public class UserController {
 	
 	@PostMapping("/updateUserWithImage")
 	public ResponseEntity<Object> updateUserWithImage(@ModelAttribute User user,@RequestParam("file") MultipartFile file,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -495,7 +522,8 @@ public class UserController {
 			} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();	
+				errorMessage=e.getMessage();
+				log.error("Inside updateUserWithImage"+errorMessage);
 			}
 		}
 		
@@ -520,6 +548,7 @@ public class UserController {
        {
        	errorCode=500;        	
        	errorMessage=e.getMessage();
+       	log.error("Inside updateUserWithImage "+errorMessage);
        }
 		User existingUserByEmail=uRepo.findByEmail(user.getEmail());
 		User existingUserByMobileNumber=uRepo.findByCountryCodeAndMobileNumber(user.getCountryCode(),user.getMobileNumber());
@@ -564,6 +593,7 @@ public class UserController {
 		} catch (Exception e) {			
 			errorMessage = e.getMessage();
 			errorCode=500;
+			log.error("Inside updateUserWithImage"+errorMessage);
 		}
 		}
 		
@@ -578,6 +608,7 @@ public class UserController {
 	
 	@PostMapping("/updateUser")
 	public ResponseEntity<Object> updateUser(@ModelAttribute User user,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -601,7 +632,8 @@ public class UserController {
 			} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();	
+				errorMessage=e.getMessage();
+				log.error("Inside updateUser"+errorMessage);
 			}
 		}
 		
@@ -626,6 +658,7 @@ public class UserController {
        {
        	errorCode=500;        	
        	errorMessage=e.getMessage();
+       	log.error("Inside updateUser"+errorMessage);
        }
 		User existingUserByEmail=null;
 		User existingUserByMobileNumber=null;
@@ -636,7 +669,7 @@ public class UserController {
 		}
 		catch(Exception ex)
 		{
-			
+			log.error("Inside updateUser"+errorMessage);
 		}
 		if(age>=15 && (existingUserByEmail!=null && existingUserByEmail.getId()!=user.getId())) {
 			errorMessage="Email Already Exists";
@@ -663,6 +696,7 @@ public class UserController {
 		} catch (Exception e) {			
 			errorMessage = e.getMessage();
 			errorCode=500;
+			log.error("Inside updateUser"+errorMessage);
 		}
 		}
 		
@@ -678,6 +712,7 @@ public class UserController {
 	
 	@PostMapping("login")
 	public ResponseEntity<Object> login(@RequestParam("email") String email,@RequestParam("countryCode") String countryCode,@RequestParam("mobileNumber") String mobileNumber,@RequestParam("password") String password) {		
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -749,6 +784,7 @@ public class UserController {
 		if (user != null && message.equals("success")) {
 			if(user.getStatus().equals("Pending")) {
 				errorMessage="Unapproved User";
+				emailService.sendEmail(user.getEmail(),"Regarding AJAPA Registration",new MessageTemplates().getPendingUserTryingLogin());
 				message="";
 				errorCode=400;
 				token="";
@@ -761,6 +797,7 @@ public class UserController {
 			}	
 			else if(user.getStatus().equals("Rejected")) {
 				errorMessage="Rejected User";
+				emailService.sendEmail(user.getEmail(),"Regarding AJAPA Registration",new MessageTemplates().getOnceAdminReject());
 				message="";
 				errorCode=400;
 				token="";
@@ -776,6 +813,7 @@ public class UserController {
 		{
 			errorCode=500;
 			errorMessage=e.getMessage();
+			log.error("Inside login"+errorMessage);
 		}
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -789,6 +827,7 @@ public class UserController {
 
 	@PostMapping("loginUsingToken")
 	public ResponseEntity<Object> loginUsingToken(@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -808,7 +847,8 @@ public class UserController {
 				} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();				
+				errorMessage=e.getMessage();
+				log.error("Inside loginUsingToken"+errorMessage);
 			}
 		}
 		try
@@ -819,6 +859,7 @@ public class UserController {
 			if(user.getStatus().equals("Pending")) {
 				errorCode=400;
 				errorMessage="Unapproved User";
+				emailService.sendEmail(user.getEmail(),"Regarding AJAPA Registration",new MessageTemplates().getPendingUserTryingLogin());
 			}
 			else if(user.getStatus().equals("Deleted")) {
 				errorCode=400;
@@ -826,6 +867,7 @@ public class UserController {
 			}
 			else if(user.getStatus().equals("Rejected")) {
 				errorMessage="Rejected User";
+				emailService.sendEmail(user.getEmail(),"Regarding AJAPA Registration",new MessageTemplates().getOnceAdminReject());
 				message="";
 				errorCode=400;
 				token="";
@@ -860,6 +902,7 @@ public class UserController {
 		{
 			errorCode=500;
 			errorMessage=e.getMessage();
+			log.error("Inside loginUsingToken"+errorMessage);
 		}
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -873,6 +916,7 @@ public class UserController {
 		
 	@PostMapping("changePassword")
 	public ResponseEntity<Object> changePassword(@RequestHeader("Authorization") String authorizationHeader,@RequestParam("password") String password) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -894,7 +938,8 @@ public class UserController {
 				} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();				
+				errorMessage=e.getMessage();
+				log.error("Inside changePassword"+errorMessage);
 			}
 		}
 		try
@@ -916,6 +961,7 @@ public class UserController {
 		{
 			errorCode=500;
 			errorMessage=e.getMessage();
+			log.error("Inside changePassword"+errorMessage);
 		}
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -928,6 +974,7 @@ public class UserController {
 	
 	@PostMapping("changeStatus")
 	public ResponseEntity<Object> changeStatus(@RequestHeader("Authorization") String authorizationHeader,@RequestParam("status") String status,@RequestParam("id") String id) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -952,7 +999,8 @@ public class UserController {
 				} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();				
+				errorMessage=e.getMessage();	
+				log.error("Inside changeStatus"+errorMessage);
 			}
 		}
 		try
@@ -960,8 +1008,12 @@ public class UserController {
 		User user = uRepo.findById(Integer.parseInt(id));
 		if(user!=null && errorCode==0 && (role.equals("Super") || role.equals("Admin") || (role.equals("User") && familyId==user.getFamilyId())))
 		{	
-			user.setStatus(status);
+			user.setStatus(status);			
 			uRepo.save(user);		
+			if(status.equals("Approved"))
+				emailService.sendEmail(user.getEmail(),"Regarding AJAPA Registration",new MessageTemplates().getOnceAdminApprove());
+			else if(status.equals("Rejected"))
+				emailService.sendEmail(user.getEmail(),"Regarding AJAPA Registration",new MessageTemplates().getOnceAdminReject());
 			message="User is "+user.getStatus();
 		}
 		else
@@ -974,6 +1026,7 @@ public class UserController {
 		{
 			errorCode=500;
 			errorMessage=e.getMessage();
+			log.error("Inside changeStatus"+errorMessage);
 		}
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -986,6 +1039,7 @@ public class UserController {
 	
 	@PostMapping("changeHead")
 	public ResponseEntity<Object> changeHead(@RequestHeader("Authorization") String authorizationHeader,@RequestParam("id") String id) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -1010,7 +1064,8 @@ public class UserController {
 				} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();				
+				errorMessage=e.getMessage();	
+				log.error("Inside changeHead"+errorMessage);
 			}
 		}
 		try
@@ -1036,6 +1091,7 @@ public class UserController {
 		{
 			errorCode=500;
 			errorMessage=e.getMessage();
+			log.error("Inside changeHead"+errorMessage);
 		}
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -1049,6 +1105,7 @@ public class UserController {
 	
 	@GetMapping("/user/list")
 	public ResponseEntity<Object> getUsers(@RequestParam int page, @RequestParam int rowsPerPage,@RequestParam String searchText,@RequestParam String status,@RequestParam String country,@RequestParam String state,@RequestParam String city,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		String email=null,role=null;		
@@ -1079,6 +1136,7 @@ public class UserController {
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
+				log.error("Inside /user/list"+errorMessage);
 			}
 		}
 		
@@ -1118,6 +1176,7 @@ public class UserController {
 		   errorCode=500;
 		   errorMessage=e.getMessage();
 		   myUsers=Collections.emptyList();
+		   log.error("Inside /user/list"+errorMessage);
 	   }
 	}
 		Map<String, Object> data = new HashMap<>();	
@@ -1140,6 +1199,7 @@ public class UserController {
 	}
 	@GetMapping("report/user/list")
 	public ResponseEntity<Object> reportGetUsers(@RequestParam String searchText,@RequestParam String status,@RequestParam String country,@RequestParam String state,@RequestParam String city,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String fileName=context.getRealPath("/")+"/reports/"+System.currentTimeMillis()+".xlsx";
 		String message="";
 		String errorMessage="";
@@ -1170,6 +1230,7 @@ public class UserController {
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
+				log.error("Inside report/user/list"+errorMessage);
 			}
 		}
 		
@@ -1195,7 +1256,7 @@ public class UserController {
 	   {
 		   errorCode=500;
 		   errorMessage=e.getMessage();
-		  
+		   log.error("Inside report/user/list"+errorMessage);		  
 	   }
 	}
 		
@@ -1211,6 +1272,7 @@ public class UserController {
 	
 	@GetMapping("reportPdf/user/list")
 	public ResponseEntity<Object> reportPDFGetUsers(@RequestParam String searchText,@RequestParam String status,@RequestParam String country,@RequestParam String state,@RequestParam String city,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String fileName=context.getRealPath("/")+"/reports/"+System.currentTimeMillis()+".pdf";
 		byte[] pdfBytes=null;
 		String message="";
@@ -1241,7 +1303,8 @@ public class UserController {
 				} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();	
+				errorMessage=e.getMessage();
+				log.error("Inside reportPdf/user/list"+errorMessage);
 			}
 		}
 		
@@ -1267,6 +1330,7 @@ public class UserController {
 	   {
 		   errorCode=500;
 		   errorMessage=e.getMessage();
+		   log.error("Inside reportPdf/user/list"+errorMessage);
 		  
 	   }
 	}
@@ -1288,10 +1352,12 @@ public class UserController {
         try (FileOutputStream fos = new FileOutputStream(filePath)) {
             fos.write(bytes);
         }
+        
     }	
 	
 	@GetMapping("/getUser/{id}")
 	public ResponseEntity<Object> getUser(@RequestHeader("Authorization") String authorizationHeader,@PathVariable("id") int id) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -1338,6 +1404,7 @@ public class UserController {
 		{
 			errorCode=500;
 			errorMessage=e.getMessage();
+			log.error("Inside /getUser/{id}"+errorMessage);
 		}		
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -1349,6 +1416,7 @@ public class UserController {
 	}  	
 	@GetMapping("/getApprovedUsersByFamilyId")
 	public ResponseEntity<Object> getAproovedUsersByFamilyId(@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -1373,7 +1441,8 @@ public class UserController {
 				} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();				
+				errorMessage=e.getMessage();
+				log.error("Inside getApprovedUsersByFamilyId"+errorMessage);
 			}
 		}
 		try
@@ -1395,6 +1464,7 @@ public class UserController {
 		{
 			errorCode=500;
 			errorMessage=e.getMessage();
+			log.error("Inside getApprovedUsersByFamilyId"+errorMessage);
 		}		
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	
@@ -1407,6 +1477,7 @@ public class UserController {
 	
 	@GetMapping("/getAllApprovedUsersByFamilyId")
 	public ResponseEntity<Object> getAllAproovedUsersByFamilyId(@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -1431,7 +1502,8 @@ public class UserController {
 				} 
 			catch (Exception e) {
 				errorCode=500;
-				errorMessage=e.getMessage();				
+				errorMessage=e.getMessage();
+				log.error("Inside getAllApprovedUsersByFamilyId"+errorMessage);
 			}
 		}
 		try
@@ -1453,6 +1525,86 @@ public class UserController {
 		{
 			errorCode=500;
 			errorMessage=e.getMessage();
+			log.error("Inside getAllApprovedUsersByFamilyId"+errorMessage);
+		}		
+		data.put("message",message);
+		data.put("errorMessage",errorMessage);	
+		data.put("errorCode",errorCode);		
+		if(errorCode==0)
+			return new ResponseEntity<>(data, HttpStatus.OK);
+		else 
+			return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);  	
+	}  	
+	
+	@GetMapping("/getCardsDetails")
+	public ResponseEntity<Object> getCardsDetails(@RequestHeader("Authorization") String authorizationHeader) {
+	
+	    Logger log=LoggerFactory.getLogger(getClass());
+		String message="";
+		String errorMessage="";
+		int errorCode=0;
+		String email = "";
+		String role="";
+		int sid=0;
+		int familyId=0;
+		Map<String, Object> data = new HashMap<>();		
+		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+			String jwtToken = authorizationHeader.substring(7); // Removing "Bearer " prefix
+			try {
+				Base64.Decoder decoder = Base64.getUrlDecoder();
+				String chunks[] = jwtToken.split("\\.");
+				String payload = new String(decoder.decode(chunks[1]));
+				ObjectMapper mapper = new ObjectMapper();
+				Map<String, Object> map = mapper.readValue(payload, Map.class);
+				email = map.get("email").toString();
+				role=map.get("role").toString();
+				sid=Integer.valueOf(map.get("id").toString());
+				familyId=Integer.valueOf(map.get("familyId").toString());
+				errorCode=0;
+				} 
+			catch (Exception e) {
+				errorCode=500;
+				errorMessage=e.getMessage();	
+				log.error("Inside getCardsDetails"+errorMessage);
+			}
+		}
+		try
+		{
+		List<User> users = null;
+		if(errorCode==0 && (role.equals("Super") || role.equals("Admin")))
+		{		
+			long familyCount=uRepo.countDistinctFamilyId();
+			long discipleCount=uRepo.countDiscipleUsers();
+			long nonDiscipleCount=uRepo.countNonDiscipleUsers();
+			long totalEvents=eRepo.countAllEvent();
+			long countActiveEvents=eRepo.countActiveEvents();
+			long countPendingUsers=uRepo.countPendingUsers();
+			long countRejectedUsers=uRepo.countRejectedUsers();
+			long countApprovedUsers=uRepo.countApprovedUsers();
+			
+			data.put("familyCount", familyCount);
+			data.put("discipleCount", discipleCount);
+			data.put("nonDiscipleCount", nonDiscipleCount);
+			data.put("totalEvents", totalEvents);
+			data.put("countActiveEvents", countActiveEvents);
+			data.put("countPendingUsers", countPendingUsers);
+			data.put("countRejectedUsers", countRejectedUsers);
+			data.put("countApprovedUsers", countApprovedUsers);
+			
+			
+			message="success";			
+		}
+		else
+		{
+			errorCode=400;
+			errorMessage="Invalid Token";
+		}
+		}
+		catch(Exception e)
+		{
+			errorCode=500;
+			errorMessage=e.getMessage();
+			log.error("Inside getCardsDetails"+errorMessage);
 		}		
 		data.put("message",message);
 		data.put("errorMessage",errorMessage);	

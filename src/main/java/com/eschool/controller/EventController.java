@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,10 +37,10 @@ public class EventController {
 	@Autowired
 	EventRepository eRepo;
 	@Autowired
-	ServletContext context;
-	
+	ServletContext context;	
 	@PostMapping("saveEventWithImage")
 	public ResponseEntity<Object> saveEventWithImage(@ModelAttribute Event event,@RequestParam("file") MultipartFile eventImage,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		System.out.println("Hello");
 		String message="";
 		String errorMessage="";
@@ -69,7 +71,7 @@ public class EventController {
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
-				System.out.println("Hello4");
+				log.error("Inside saveEventWithImage"+errorMessage);
 			}
 		}
 		if(errorCode==0)
@@ -96,6 +98,7 @@ public class EventController {
 		catch (Exception e) {			
 			errorMessage = e.getMessage();
 			errorCode=500;
+			log.error("Inside saveEventWithImage"+errorMessage);
 		}
 		}
 		data.put("message",message);
@@ -109,7 +112,7 @@ public class EventController {
 	
 	@PostMapping("saveEvent")
 	public ResponseEntity<Object> saveEvent(@ModelAttribute Event event,@RequestHeader("Authorization") String authorizationHeader) {
-		System.out.println("Hello");
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;		
@@ -133,13 +136,13 @@ public class EventController {
 				{
 					errorCode=400;
 					errorMessage="Invalid Token Values";
-					System.out.println("Hello3");
+					
 				}
 				} 
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
-				System.out.println("Hello4");
+				log.error("Inside saveEvent"+errorMessage);
 			}
 		}
 		if(errorCode==0)
@@ -162,6 +165,7 @@ public class EventController {
 		catch (Exception e) {			
 			errorMessage = e.getMessage();
 			errorCode=500;
+			log.error("Inside saveEvent"+errorMessage);
 		}
 		}
 		data.put("message",message);
@@ -175,6 +179,7 @@ public class EventController {
 	@GetMapping("/event/{eventId}")
 	public ResponseEntity<Object> getEvent(@PathVariable int eventId, @RequestHeader("Authorization") String authorizationHeader)
 		{		
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -204,7 +209,7 @@ public class EventController {
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
-				System.out.println("Hello4");
+				log.error("Inside /event/{eventId}"+errorMessage);
 			}
 		}
 		
@@ -225,6 +230,7 @@ public class EventController {
 	   {
 		   errorCode=500;
 		   errorMessage=e.getMessage();
+		   log.error("Inside /event/{eventId}"+errorMessage);
 	   }
 	}
 		Map<String, Object> data = new HashMap<>();	
@@ -242,6 +248,7 @@ public class EventController {
 	@PostMapping("/event/status/{eventId}/{eventStatus}")
 	public ResponseEntity<Object> changeEventStatus(@PathVariable int eventId,@PathVariable boolean eventStatus, @RequestHeader("Authorization") String authorizationHeader)
 		{		
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -271,7 +278,7 @@ public class EventController {
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
-				System.out.println("Hello4");
+				log.error("Inside /event/status/{eventId}/{eventStatus}"+errorMessage);
 			}
 		}
 		
@@ -298,6 +305,7 @@ public class EventController {
 	   {
 		   errorCode=500;
 		   errorMessage=e.getMessage();
+		   log.error("Inside /event/status/{eventId}/{eventStatus}"+errorMessage);
 	   }
 	}
 		Map<String, Object> data = new HashMap<>();	
@@ -314,6 +322,7 @@ public class EventController {
 	@PostMapping("/event/booking/{eventId}/{bookingStatus}")
 	public ResponseEntity<Object> changeBooikingStatus(@PathVariable int eventId,@PathVariable boolean bookingStatus, @RequestHeader("Authorization") String authorizationHeader)
 		{		
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -337,13 +346,13 @@ public class EventController {
 				{
 					errorCode=400;
 					errorMessage="Invalid Token Values";
-					System.out.println("Hello3");
+					
 				}
 				} 
 			catch (Exception e) {
 				errorCode=500;
 				errorMessage=e.getMessage();	
-				System.out.println("Hello4");
+				log.error("Inside event/booking/{eventId}/{bookingStatus}"+errorMessage);
 			}
 		}
 		
@@ -368,6 +377,7 @@ public class EventController {
 	   {
 		   errorCode=500;
 		   errorMessage=e.getMessage();
+		   log.error("Inside event/booking/{eventId}/{bookingStatus}"+errorMessage);
 	   }
 	}
 		Map<String, Object> data = new HashMap<>();	
@@ -383,6 +393,7 @@ public class EventController {
 	
 	@GetMapping("/event/list")
 	public ResponseEntity<Object> getEvents(@RequestParam int page, @RequestParam int rowsPerPage,@RequestParam String eventName,@RequestParam boolean eventStatus,@RequestParam boolean bookingStatus) {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -415,6 +426,7 @@ public class EventController {
 		   errorCode=500;
 		   errorMessage=e.getMessage();
 		   myEvents=Collections.emptyList();
+		   log.error("Inside /event/list"+errorMessage);
 	   }
 		
 		Map<String, Object> data = new HashMap<>();	
@@ -439,6 +451,7 @@ public class EventController {
 
 	@GetMapping("/event/all/list")
 	public ResponseEntity<Object> getAllEvents() {
+		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
 		int errorCode=0;
@@ -453,6 +466,7 @@ public class EventController {
 		   errorCode=500;
 		   errorMessage=e.getMessage();
 		   myEvents=Collections.emptyList();
+		   log.error("Inside /event/all/list"+errorMessage);
 	   }
 		
 		Map<String, Object> data = new HashMap<>();	

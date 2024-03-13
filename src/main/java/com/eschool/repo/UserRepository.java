@@ -27,5 +27,17 @@ public interface UserRepository extends CrudRepository<User, Integer>{
 	List<User> findByCountryAndStateAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(@Param("country") String country,@Param("state") String state,@Param("status") String status, @Param("name") String name,@Param("email") String email,@Param("mobileNumber") String mobileNumber,@Param("role") String role);
 	@Query("SELECT u FROM User u WHERE u.country=:country and u.state=:state and u.city=:city and u.status=:status and (u.name like :name% or u.email like :email% or u.mobileNumber like :mobileNumber%) and u.role!= :role order by familyId")
 	List<User> findByCountryAndStateAndCityAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(@Param("country") String country,@Param("state") String state,@Param("city") String city,@Param("status") String status, @Param("name") String name,@Param("email") String email,@Param("mobileNumber") String mobileNumber,@Param("role") String role);
-							
+	@Query("SELECT COUNT(DISTINCT e.familyId) FROM User e")
+    Long countDistinctFamilyId();
+	@Query("SELECT COUNT(*) FROM User e where e.isDisciple=true")
+    Long countDiscipleUsers();	
+	@Query("SELECT COUNT(*) FROM User e where e.isDisciple=false")
+    Long countNonDiscipleUsers();	
+	@Query("SELECT COUNT(*) FROM User e where e.status='Pending'")
+    Long countPendingUsers();
+	@Query("SELECT COUNT(*) FROM User e where e.status='Rejected'")
+    Long countRejectedUsers();
+	@Query("SELECT COUNT(*) FROM User e where e.status='Approved'")
+    Long countApprovedUsers();
+	
 }
