@@ -19,13 +19,13 @@ public interface UserRepository extends CrudRepository<User, Integer>{
 	List<User> findAllByStatus(String status);
 	User findByCountryCodeAndMobileNumber(String countryCode,String mobileNumber);
 	//List<User> findByNameStartingWithAndStatusOrderByFamilyId(String name, String status);    
-	@Query("SELECT u FROM User u WHERE u.status=:status and (u.name like :name% or u.email like :email% or u.mobileNumber like :mobileNumber%) and u.role!= :role order by familyId")
+	@Query("SELECT u FROM User u WHERE u.status=:status and (u.name like %:name% or u.email like %:email% or u.mobileNumber like %:mobileNumber%) and u.role!= :role order by familyId")
     List<User> findByStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(@Param("status") String status, @Param("name") String name,@Param("email") String email,@Param("mobileNumber") String mobileNumber,@Param("role") String role);
-	@Query("SELECT u FROM User u WHERE u.country=:country and u.status=:status and (u.name like :name% or u.email like :email% or u.mobileNumber like :mobileNumber%) and u.role!= :role order by familyId")
+	@Query("SELECT u FROM User u WHERE u.country=:country and u.status=:status and (u.name like %:name% or u.email like %:email% or u.mobileNumber like %:mobileNumber%) and u.role!= :role order by familyId")
 	List<User> findByCountryAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(@Param("country") String country,@Param("status") String status, @Param("name") String name,@Param("email") String email,@Param("mobileNumber") String mobileNumber,@Param("role") String role);
-	@Query("SELECT u FROM User u WHERE u.country=:country and u.state=:state and u.status=:status and (u.name like :name% or u.email like :email% or u.mobileNumber like :mobileNumber%) and u.role!= :role order by familyId")
+	@Query("SELECT u FROM User u WHERE u.country=:country and u.state=:state and u.status=:status and (u.name like %:name% or u.email like %:email% or u.mobileNumber like %:mobileNumber%) and u.role!= :role order by familyId")
 	List<User> findByCountryAndStateAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(@Param("country") String country,@Param("state") String state,@Param("status") String status, @Param("name") String name,@Param("email") String email,@Param("mobileNumber") String mobileNumber,@Param("role") String role);
-	@Query("SELECT u FROM User u WHERE u.country=:country and u.state=:state and u.city=:city and u.status=:status and (u.name like :name% or u.email like :email% or u.mobileNumber like :mobileNumber%) and u.role!= :role order by familyId")
+	@Query("SELECT u FROM User u WHERE u.country=:country and u.state=:state and u.city=:city and u.status=:status and (u.name like %:name% or u.email like %:email% or u.mobileNumber like %:mobileNumber%) and u.role!= :role order by familyId")
 	List<User> findByCountryAndStateAndCityAndStatusAndNameOrEmailOrMobileNumberOrderByFamilyId(@Param("country") String country,@Param("state") String state,@Param("city") String city,@Param("status") String status, @Param("name") String name,@Param("email") String email,@Param("mobileNumber") String mobileNumber,@Param("role") String role);
 	@Query("SELECT COUNT(DISTINCT e.familyId) FROM User e")
     Long countDistinctFamilyId();

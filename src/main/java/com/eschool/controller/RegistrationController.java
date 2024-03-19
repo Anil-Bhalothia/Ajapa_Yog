@@ -35,6 +35,7 @@ import com.eschool.service.PDFService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.ServletContext;
+import jakarta.transaction.Transactional;
 
 @RestController
 public class RegistrationController {
@@ -108,6 +109,65 @@ public class RegistrationController {
 		else 
 			return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);		
     }
+	
+	@Transactional
+	@PostMapping("eventRegistrations/delete")
+	public ResponseEntity<Object> deleteAllEventRegistrationByEventIdAndFamilyId(@RequestParam int eventId,@RequestParam int familyId,@RequestHeader("Authorization") String authorizationHeader) {
+		Logger log=LoggerFactory.getLogger(getClass());
+		String message="";
+		String errorMessage="";
+		int errorCode=0;		
+		Map<String, Object> data = new HashMap<>();	
+		String email=null,role=null;
+		int fId=0;
+		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+			String jwtToken = authorizationHeader.substring(7); // Removing "Bearer " prefix
+			try {
+				Base64.Decoder decoder = Base64.getUrlDecoder();
+				String chunks[] = jwtToken.split("\\.");
+				String payload = new String(decoder.decode(chunks[1]));
+				ObjectMapper mapper = new ObjectMapper();
+				Map<String, Object> map = mapper.readValue(payload, Map.class);
+				email = map.get("email").toString();
+				role = map.get("role").toString();	
+				fId=Integer.valueOf(map.get("familyId").toString());				
+				if(fId==familyId)
+				{
+				}
+				else
+				{
+					errorCode=400;
+					errorMessage="Invalid Token Values";
+				}
+				} 
+			catch (Exception e) {
+				errorCode=500;
+				errorMessage=e.getMessage();
+				log.error("Inside event/registration/save"+errorMessage);
+			}
+		}
+		if(errorCode==0)
+		{
+		try {	
+			log.info("Deleted By: "+email);
+			erRepo.deleteByEventIdAndFamilyId(eventId, familyId);
+			message="Your data has been saved successfully";			
+			}
+		catch (Exception e) {			
+			errorMessage = e.getMessage();
+			errorCode=500;
+			log.error("Inside event/registration/delete"+errorMessage);
+		}
+		}
+		data.put("message",message);
+		data.put("errorMessage",errorMessage);	
+		data.put("errorCode",errorCode);		
+		if(errorCode==0)
+			return new ResponseEntity<>(data, HttpStatus.OK);
+		else 
+			return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);		
+    }
+	
 	@GetMapping("/event/registration/{registrationId}")
 	public ResponseEntity<Object> getEventRegistration(@RequestHeader("Authorization") String authorizationHeader,@PathVariable("registrationId") int registrationId) {
 		Logger log=LoggerFactory.getLogger(getClass());
@@ -387,7 +447,7 @@ public class RegistrationController {
 	
 	
 	@PutMapping("/event/registration/delete/{eventId}/{familyId}")
-	public ResponseEntity<Object> deleteAllEventRegistrationsByEventIdAndFamilyId(@RequestParam int eventId, @RequestParam int familyId,@RequestHeader("Authorization") String authorizationHeader) {
+	public ResponseEntity<Object> deleteEventRegistrationsByEventIdAndFamilyId(@RequestParam int eventId, @RequestParam int familyId,@RequestHeader("Authorization") String authorizationHeader) {
 		Logger log=LoggerFactory.getLogger(getClass());
 		String message="";
 		String errorMessage="";
